@@ -134,6 +134,10 @@ Can you setup the service worker for PWA functionality
 ```
 
 ```
+On the View Team page, can you add functionality to add a player to the team. The page should also show the Team name, and provide the option to remove or edit a player.
+```
+
+```
 Implementing the game clock logic
 Setting up the service worker for PWA functionality
 Creating the responsive UI components using React Bootstrap

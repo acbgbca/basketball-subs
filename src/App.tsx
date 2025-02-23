@@ -7,6 +7,7 @@ import { TeamForm } from './components/TeamForm';
 import { GameList } from './components/GameList';
 import { GameForm } from './components/GameForm';
 import { GameView } from './components/GameView';
+import { TeamView } from './components/TeamView';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
             <Route path="/games" element={<GameList />} />
             <Route path="/games/new" element={<GameForm />} />
             <Route path="/games/:id" element={<GameView />} />
+            <Route path="/teams/:id" element={<TeamView />} />
           </Routes>
         </Container>
       </GameProvider>

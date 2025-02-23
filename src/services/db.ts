@@ -47,5 +47,15 @@ export const dbService = {
     await db.put('games', game);
   },
 
+  async getTeam(id: string): Promise<Team> {
+    const db = await initDB();
+    return db.get('teams', id);
+  },
+
+  async updateTeam(team: Team): Promise<void> {
+    const db = await initDB();
+    await db.put('teams', team);
+  },
+
   // Add more methods as needed
 }; 
