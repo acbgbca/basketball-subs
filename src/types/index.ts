@@ -13,9 +13,10 @@ export interface Team {
 export interface Substitution {
   id: string;
   player: Player;
-  timeOn: number;
-  timeOff: number | null;
+  timeIn: number;  // seconds remaining when subbed in
+  timeOut: number | null;  // seconds remaining when subbed out
   minutesPlayed: number | null;
+  periodId: string;  // to track which period the substitution belongs to
 }
 
 export interface Period {

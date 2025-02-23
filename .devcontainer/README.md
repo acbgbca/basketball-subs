@@ -141,11 +141,15 @@ On the View Team page, can you add functionality to add a player to the team. Th
 On the List games page, add the option to delete a game
 ```
 
-
 ```
-Implementing the game clock logic
-Setting up the service worker for PWA functionality
-Creating the responsive UI components using React Bootstrap
-Implementing the substitution management system
-Let me know which part you'd like to focus on next!
+On the view game page, make the following changes:
+- The clock should start with the time based on the period length. On clicking start, the click should start counting down the time.
+- Add a button to stop the clock. When stopped, the clock should not run even if the period has ended.
+- When clicking 'Sub In', a new substitution should be created for that player with the timeIn set to the current time on the clock.
+- When clicking 'Sub Out', the substitution should be updated to have the timeOut set to the current time on the clock and the minutesPlayed should be calculated as the difference between the timeIn and timeOut.
+- Add a button to end the period. If there are more periods to play, the clock should reset to the period length. If there are no more periods to play, the clock should stop.
+- Show the minutes player for each player against their name in the Players table.
+- Show the list of substitutions in a table at the bottom of the page.
+- The substitutions table should allow the user to delete a substitution.
+- The substitutions table should allow the user to edit the timeIn and timeOut for a substitution.
 ```
