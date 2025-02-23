@@ -138,6 +138,11 @@ On the View Team page, can you add functionality to add a player to the team. Th
 ```
 
 ```
+On the List games page, add the option to delete a game
+```
+
+
+```
 Implementing the game clock logic
 Setting up the service worker for PWA functionality
 Creating the responsive UI components using React Bootstrap

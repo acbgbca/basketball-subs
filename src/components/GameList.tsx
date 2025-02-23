@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Button } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Modal } from 'react-bootstrap';
 import { Game } from '../types';
 import { dbService } from '../services/db';
 
 export const GameList: React.FC = () => {
   const [games, setGames] = useState<Game[]>([]);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [gameToDelete, setGameToDelete] = useState<Game | null>(null);
 
   useEffect(() => {
     const loadGames = async () => {
@@ -13,6 +15,24 @@ export const GameList: React.FC = () => {
     };
     loadGames();
   }, []);
+
+  const handleDeleteClick = (game: Game) => {
+    setGameToDelete(game);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!gameToDelete) return;
+
+    try {
+      await dbService.deleteGame(gameToDelete.id);
+      setGames(games.filter(game => game.id !== gameToDelete.id));
+      setShowDeleteModal(false);
+      setGameToDelete(null);
+    } catch (error) {
+      console.error('Error deleting game:', error);
+    }
+  };
 
   return (
     <Container>
@@ -33,14 +53,44 @@ export const GameList: React.FC = () => {
                   <br />
                   Periods: {game.periods.length}
                 </Card.Text>
-                <Button variant="outline-primary" href={`/games/${game.id}`}>
-                  View Game
-                </Button>
+                <div className="d-flex gap-2">
+                  <Button 
+                    variant="outline-primary" 
+                    href={`/games/${game.id}`}
+                  >
+                    View Game
+                  </Button>
+                  <Button 
+                    variant="outline-danger"
+                    onClick={() => handleDeleteClick(game)}
+                  >
+                    Delete
+                  </Button>
+                </div>
               </Card.Body>
             </Card>
           </Col>
         ))}
       </Row>
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Delete</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to delete the game for {gameToDelete?.team.name} on{' '}
+          {gameToDelete && new Date(gameToDelete.date).toLocaleDateString()}?
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDeleteConfirm}>
+            Delete Game
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 }; 
