@@ -1,25 +1,42 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { Container, Navbar, Nav } from 'react-bootstrap';
+import { GameProvider } from './contexts/GameContext';
+import { TeamList } from './components/TeamList';
+import { TeamForm } from './components/TeamForm';
+import { GameList } from './components/GameList';
+import { GameForm } from './components/GameForm';
+import { GameView } from './components/GameView';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <GameProvider>
+        <Navbar bg="dark" variant="dark" expand="lg">
+          <Container>
+            <Navbar.Brand as={Link} to="/">Basketball Stats</Navbar.Brand>
+            <Navbar.Toggle aria-controls="basic-navbar-nav" />
+            <Navbar.Collapse id="basic-navbar-nav">
+              <Nav className="me-auto">
+                <Nav.Link as={Link} to="/teams">Teams</Nav.Link>
+                <Nav.Link as={Link} to="/games">Games</Nav.Link>
+              </Nav>
+            </Navbar.Collapse>
+          </Container>
+        </Navbar>
+
+        <Container className="mt-4">
+          <Routes>
+            <Route path="/" element={<GameList />} />
+            <Route path="/teams" element={<TeamList />} />
+            <Route path="/teams/new" element={<TeamForm />} />
+            <Route path="/games" element={<GameList />} />
+            <Route path="/games/new" element={<GameForm />} />
+            <Route path="/games/:id" element={<GameView />} />
+          </Routes>
+        </Container>
+      </GameProvider>
+    </Router>
   );
 }
 
