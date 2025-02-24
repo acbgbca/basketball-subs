@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/basketball-stats/static/css/main.e6c13ad2.css",
+    "main.js": "/basketball-stats/static/js/main.f389795d.js",
+    "static/js/453.915cf7a6.chunk.js": "/basketball-stats/static/js/453.915cf7a6.chunk.js",
+    "index.html": "/basketball-stats/index.html",
+    "main.e6c13ad2.css.map": "/basketball-stats/static/css/main.e6c13ad2.css.map",
+    "main.f389795d.js.map": "/basketball-stats/static/js/main.f389795d.js.map",
+    "453.915cf7a6.chunk.js.map": "/basketball-stats/static/js/453.915cf7a6.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.e6c13ad2.css",
+    "static/js/main.f389795d.js"
+  ]
+}
