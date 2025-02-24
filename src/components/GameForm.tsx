@@ -24,8 +24,9 @@ export const GameForm: React.FC = () => {
     const selectedTeam = teams.find(team => team.id === selectedTeamId);
     if (!selectedTeam) return;
 
-    const periods = Array(numPeriods).fill(null).map(() => ({
+    const periods = Array(numPeriods).fill(null).map((_, index) => ({
       id: uuidv4(),
+      periodNumber: index + 1,
       length: periodLength,
       substitutions: []
     }));

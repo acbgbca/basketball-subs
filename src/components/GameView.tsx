@@ -34,6 +34,9 @@ export const GameView: React.FC = () => {
   // Add this with other state declarations
   const [showAllPeriods, setShowAllPeriods] = useState(false);
 
+  // Add new state near other state declarations
+  const [showEndPeriodModal, setShowEndPeriodModal] = useState(false);
+
   useEffect(() => {
     const loadGame = async () => {
       if (id) {
@@ -142,10 +145,30 @@ export const GameView: React.FC = () => {
   const handleEndPeriod = async () => {
     if (!game) return;
 
-    // Sub out all active players
+    // Sub out all active players with timeOut = 0
     const promises = Array.from(activePlayers).map(playerId => {
       const player = game.team.players.find(p => p.id === playerId);
-      if (player) return handleSubstitution(player);
+      if (player) {
+        const currentPeriodData = game.periods[currentPeriod];
+        const activeSub = currentPeriodData.substitutions.find(
+          sub => sub.player.id === player.id && sub.timeOut === null
+        );
+
+        if (activeSub) {
+          const updatedSub: Substitution = {
+            ...activeSub,
+            timeOut: 0,
+            secondsPlayed: activeSub.timeIn
+          };
+
+          const updatedPeriods = [...game.periods];
+          updatedPeriods[currentPeriod].substitutions = currentPeriodData.substitutions.map(
+            sub => sub.id === activeSub.id ? updatedSub : sub
+          );
+
+          return dbService.updateGame({ ...game, periods: updatedPeriods });
+        }
+      }
       return Promise.resolve();
     });
 
@@ -157,6 +180,7 @@ export const GameView: React.FC = () => {
       setTimeRemaining(game.periods[currentPeriod + 1].length * 60);
     }
     setActivePlayers(new Set());
+    setShowEndPeriodModal(false);
   };
 
   const handleDeleteSubstitution = async (subToDelete: Substitution) => {
@@ -257,7 +281,7 @@ export const GameView: React.FC = () => {
               </Button>
               <Button 
                 variant="warning"
-                onClick={handleEndPeriod}
+                onClick={() => setShowEndPeriodModal(true)}
               >
                 End Period
               </Button>
@@ -284,7 +308,7 @@ export const GameView: React.FC = () => {
                 <tr key={player.id}>
                   <td>{player.number}</td>
                   <td>{player.name}</td>
-                  <td>{calculatePlayerMinutes(player.id).toFixed(1)}</td>
+                  <td>{formatTime(calculatePlayerMinutes(player.id))}</td>
                   <td>
                     <Badge bg={activePlayers.has(player.id) ? "success" : "secondary"}>
                       {activePlayers.has(player.id) ? "On Court" : "On Bench"}
@@ -329,44 +353,42 @@ export const GameView: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {game.periods.slice(0, showAllPeriods ? undefined : currentPeriod + 1).map((period, periodIndex) => (
-                period.substitutions.map(sub => (
-                  <tr key={sub.id}>
-                    <td>{periodIndex + 1}</td>
-                    <td>{sub.player.name}</td>
-                    <td>{formatTime(sub.timeIn)}</td>
-                    <td>{sub.timeOut ? formatTime(sub.timeOut) : 'Active'}</td>
-                    <td>{sub.secondsPlayed ? formatTime(sub.secondsPlayed) : '-'}</td>
-                    <td>
-                      {periodIndex === currentPeriod && (
-                        <>
-                          <Button
-                            variant="outline-primary"
-                            size="sm"
-                            className="me-2"
-                            onClick={() => {
-                              setSelectedSub(sub);
-                              setEditForm({
-                                timeIn: sub.timeIn,
-                                timeOut: sub.timeOut || 0
-                              });
-                              setShowEditSubModal(true);
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            variant="outline-danger"
-                            size="sm"
-                            onClick={() => handleDeleteSubstitution(sub)}
-                          >
-                            Delete
-                          </Button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))
+              {game.periods.slice(showAllPeriods ? 0 : currentPeriod, showAllPeriods ? undefined : currentPeriod + 1).sort((a, b) => b.periodNumber - a.periodNumber).map((period, periodIndex) => (
+                period.substitutions
+                  .sort((a, b) => a.timeIn - b.timeIn)
+                  .map(sub => (
+                    <tr key={sub.id}>
+                      <td>{period.periodNumber}</td>
+                      <td>{sub.player.name}</td>
+                      <td>{formatTime(sub.timeIn)}</td>
+                      <td>{sub.timeOut || sub.timeOut === 0 ? formatTime(sub.timeOut) : 'Active'}</td>
+                      <td>{sub.secondsPlayed ? formatTime(sub.secondsPlayed) : '-'}</td>
+                      <td>
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          className="me-2"
+                          onClick={() => {
+                            setSelectedSub(sub);
+                            setEditForm({
+                              timeIn: sub.timeIn,
+                              timeOut: sub.timeOut || 0
+                            });
+                            setShowEditSubModal(true);
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline-danger"
+                          size="sm"
+                          onClick={() => handleDeleteSubstitution(sub)}
+                        >
+                          Delete
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
               ))}
             </tbody>
           </Table>
@@ -408,6 +430,25 @@ export const GameView: React.FC = () => {
             </Button>
           </Modal.Footer>
         </Form>
+      </Modal>
+
+      {/* End Period Confirmation Modal */}
+      <Modal show={showEndPeriodModal} onHide={() => setShowEndPeriodModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>End Period Confirmation</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to end Period {currentPeriod + 1}? 
+          {activePlayers.size > 0 && ` ${activePlayers.size} player(s) will be subbed out.`}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowEndPeriodModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="warning" onClick={handleEndPeriod}>
+            End Period
+          </Button>
+        </Modal.Footer>
       </Modal>
     </Container>
   );

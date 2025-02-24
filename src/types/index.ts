@@ -21,6 +21,7 @@ export interface Substitution {
 
 export interface Period {
   id: string;
+  periodNumber: number;
   length: 10 | 20;
   substitutions: Substitution[];
 }
