@@ -2,6 +2,8 @@
 
 This is a Progressive Web Application that is designed to help a basketball coach track how long each player has played in a game.
 
+The GitHub hosted page can be accessed at: https://acbgbca.github.io/basketball-subs/
+
 # Prompts for creation:
 
 This application was bootstraped using AI. The following prompts were used to create the application.
