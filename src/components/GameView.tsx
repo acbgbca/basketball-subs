@@ -75,10 +75,10 @@ export const GameView: React.FC = () => {
     if (!game) return 0;
     return game.periods.reduce((total, period) => {
       const playerSubs = period.substitutions.filter(sub => 
-        sub.player.id === playerId && sub.minutesPlayed !== null
+        sub.player.id === playerId && sub.secondsPlayed !== null
       );
       return total + playerSubs.reduce((subTotal, sub) => 
-        subTotal + (sub.minutesPlayed || 0), 0
+        subTotal + (sub.secondsPlayed || 0), 0
       );
     }, 0);
   };
@@ -99,7 +99,7 @@ export const GameView: React.FC = () => {
         const updatedSub: Substitution = {
           ...activeSub,
           timeOut: timeRemaining,
-          minutesPlayed: (activeSub.timeIn - timeRemaining) / 60
+          secondsPlayed: (activeSub.timeIn - timeRemaining)
         };
 
         const updatedPeriods = [...game.periods];
@@ -122,7 +122,7 @@ export const GameView: React.FC = () => {
         player,
         timeIn: timeRemaining,
         timeOut: null,
-        minutesPlayed: null,
+        secondsPlayed: null,
         periodId: currentPeriodData.id
       };
 
@@ -179,7 +179,7 @@ export const GameView: React.FC = () => {
       ...selectedSub,
       timeIn: editForm.timeIn,
       timeOut: editForm.timeOut,
-      minutesPlayed: (editForm.timeIn - editForm.timeOut) / 60
+      secondsPlayed: (editForm.timeIn - editForm.timeOut)
     };
 
     const updatedPeriods = [...game.periods];
@@ -336,7 +336,7 @@ export const GameView: React.FC = () => {
                     <td>{sub.player.name}</td>
                     <td>{formatTime(sub.timeIn)}</td>
                     <td>{sub.timeOut ? formatTime(sub.timeOut) : 'Active'}</td>
-                    <td>{sub.minutesPlayed?.toFixed(1) || '-'}</td>
+                    <td>{sub.secondsPlayed ? formatTime(sub.secondsPlayed) : '-'}</td>
                     <td>
                       {periodIndex === currentPeriod && (
                         <>

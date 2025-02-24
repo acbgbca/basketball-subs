@@ -15,7 +15,7 @@ export interface Substitution {
   player: Player;
   timeIn: number;  // seconds remaining when subbed in
   timeOut: number | null;  // seconds remaining when subbed out
-  minutesPlayed: number | null;
+  secondsPlayed: number | null;
   periodId: string;  // to track which period the substitution belongs to
 }
 
