@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Card, Button, Modal } from 'react-bootstrap';
 import { Game } from '../types';
 import { dbService } from '../services/db';
-
+import { APP_CONFIG } from '../config';
 export const GameList: React.FC = () => {
   const [games, setGames] = useState<Game[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -39,7 +39,7 @@ export const GameList: React.FC = () => {
       <Row className="mb-4">
         <Col>
           <h2>Games</h2>
-          <Button variant="primary" href="/games/new">New Game</Button>
+          <Button variant="primary" href={`${APP_CONFIG.basePath}/games/new`}>New Game</Button>
         </Col>
       </Row>
       <Row>
@@ -56,7 +56,7 @@ export const GameList: React.FC = () => {
                 <div className="d-flex gap-2">
                   <Button 
                     variant="outline-primary" 
-                    href={`/games/${game.id}`}
+                    href={`${APP_CONFIG.basePath}/games/${game.id}`}
                   >
                     View Game
                   </Button>

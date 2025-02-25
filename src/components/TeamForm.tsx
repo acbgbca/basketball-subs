@@ -3,6 +3,7 @@ import { Form, Button, Container } from 'react-bootstrap';
 import { v4 as uuidv4 } from 'uuid';
 import { Team } from '../types';
 import { dbService } from '../services/db';
+import { APP_CONFIG } from '../config';
 
 export const TeamForm: React.FC = () => {
   const [teamName, setTeamName] = useState('');
@@ -19,7 +20,7 @@ export const TeamForm: React.FC = () => {
     try {
       await dbService.addTeam(newTeam);
       // Redirect to team list
-      window.location.href = '/teams';
+      window.location.href = `${APP_CONFIG.basePath}/teams`;
     } catch (error) {
       console.error('Error creating team:', error);
     }

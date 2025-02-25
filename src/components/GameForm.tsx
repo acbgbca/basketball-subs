@@ -3,7 +3,7 @@ import { Form, Button, Container } from 'react-bootstrap';
 import { v4 as uuidv4 } from 'uuid';
 import { Game, Team } from '../types';
 import { dbService } from '../services/db';
-
+import { APP_CONFIG } from '../config';
 export const GameForm: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeamId, setSelectedTeamId] = useState('');
@@ -41,7 +41,7 @@ export const GameForm: React.FC = () => {
     try {
       await dbService.addGame(newGame);
       // Redirect to game list
-      window.location.href = '/games';
+      window.location.href = `${APP_CONFIG.basePath}/games`;
     } catch (error) {
       console.error('Error creating game:', error);
     }
