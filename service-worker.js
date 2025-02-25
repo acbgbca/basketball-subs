@@ -8,7 +8,7 @@ const urlsToCache = [
   BASE_PATH + '/static/js/0.chunk.js',
   BASE_PATH + '/static/js/bundle.js',
   BASE_PATH + '/manifest.json',
-  BASE_PATH + '/favicon.ico',
+  BASE_PATH + '/favicon.png',
   BASE_PATH + '/logo192.png',
   BASE_PATH + '/logo512.png',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css'
