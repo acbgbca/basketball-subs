@@ -1,5 +1,5 @@
 import { openDB } from 'idb';
-import { Team, Player, Game } from '../types';
+import { Team, Game } from '../types';
 
 const DB_NAME = 'basketball-stats';
 const DB_VERSION = 1;
@@ -9,7 +9,6 @@ export const initDB = async () => {
     upgrade(db) {
       // Create object stores
       db.createObjectStore('teams', { keyPath: 'id' });
-      db.createObjectStore('players', { keyPath: 'id' });
       db.createObjectStore('games', { keyPath: 'id' });
     },
   });
