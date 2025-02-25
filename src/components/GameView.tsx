@@ -296,9 +296,9 @@ export const GameView: React.FC = () => {
           <Table striped bordered>
             <thead>
               <tr>
-                <th>Number</th>
+                <th>#</th>
                 <th>Name</th>
-                <th>Minutes Played</th>
+                <th>Played</th>
                 <th>Status</th>
                 <th>Action</th>
               </tr>
@@ -311,7 +311,7 @@ export const GameView: React.FC = () => {
                   <td>{formatTime(calculatePlayerMinutes(player.id))}</td>
                   <td>
                     <Badge bg={activePlayers.has(player.id) ? "success" : "secondary"}>
-                      {activePlayers.has(player.id) ? "On Court" : "On Bench"}
+                      {activePlayers.has(player.id) ? "Court" : "Bench"}
                     </Badge>
                   </td>
                   <td>
@@ -344,11 +344,11 @@ export const GameView: React.FC = () => {
           <Table striped bordered>
             <thead>
               <tr>
-                <th>Period</th>
+                <th>#</th>
                 <th>Player</th>
                 <th>Time In</th>
                 <th>Time Out</th>
-                <th>Minutes Played</th>
+                <th>Played</th>
                 <th>Actions</th>
               </tr>
             </thead>
