@@ -1,20 +1,19 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Container, Row, Col, Button, Table, Badge, Modal, Form } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
-import { useGame } from '../contexts/GameContext';
+// import { useGame } from '../contexts/GameContext';
 import { Game, Player, Substitution } from '../types';
 import { dbService } from '../services/db';
-import { validRange } from 'semver';
 
 export const GameView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { 
-    currentTime,
-    isClockRunning,
-    startClock,
-    stopClock,
-    adjustClock
-  } = useGame();
+  // const { 
+  //   currentTime,
+  //   isClockRunning,
+  //   startClock,
+  //   stopClock,
+  //   adjustClock
+  // } = useGame();
   
   const [game, setGame] = useState<Game | null>(null);
   const [activePlayers, setActivePlayers] = useState<Set<string>>(new Set());
