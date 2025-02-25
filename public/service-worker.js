@@ -1,14 +1,16 @@
 const CACHE_NAME = 'basketball-stats-v1';
+const BASE_PATH = '/basketball-subs';
+
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/static/js/main.chunk.js',
-  '/static/js/0.chunk.js',
-  '/static/js/bundle.js',
-  '/manifest.json',
-  '/favicon.ico',
-  '/logo192.png',
-  '/logo512.png',
+  BASE_PATH + '/',
+  BASE_PATH + '/index.html',
+  BASE_PATH + '/static/js/main.chunk.js',
+  BASE_PATH + '/static/js/0.chunk.js',
+  BASE_PATH + '/static/js/bundle.js',
+  BASE_PATH + '/manifest.json',
+  BASE_PATH + '/favicon.ico',
+  BASE_PATH + '/logo192.png',
+  BASE_PATH + '/logo512.png',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css'
 ];
 
