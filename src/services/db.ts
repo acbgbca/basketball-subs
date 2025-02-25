@@ -62,5 +62,10 @@ export const dbService = {
     await db.delete('games', id);
   },
 
+  async deleteTeam(id: string): Promise<void> {
+    const db = await initDB();
+    await db.delete('teams', id);
+  },
+
   // Add more methods as needed
 }; 

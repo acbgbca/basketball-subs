@@ -22,7 +22,7 @@ jobs:
       run: npm ci
 
     - name: Build
-      run: CI=false npm run build
+      run: npm run build
       env:
         PUBLIC_URL: /basketball-subs
 
