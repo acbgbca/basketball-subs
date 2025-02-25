@@ -14,9 +14,7 @@ root.render(
   </React.StrictMode>
 );
 
-serviceWorker.register({
-  scope: process.env.REACT_APP_BASE_PATH || '/basketball-subs/'
-});
+serviceWorker.register({});
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

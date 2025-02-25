@@ -8,7 +8,6 @@ import { GameList } from './components/GameList';
 import { GameForm } from './components/GameForm';
 import { GameView } from './components/GameView';
 import { TeamView } from './components/TeamView';
-import { APP_CONFIG } from './config';
 
 function App() {
   return (
