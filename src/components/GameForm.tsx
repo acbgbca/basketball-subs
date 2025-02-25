@@ -3,12 +3,14 @@ import { Form, Button, Container } from 'react-bootstrap';
 import { v4 as uuidv4 } from 'uuid';
 import { Game, Team } from '../types';
 import { dbService } from '../services/db';
-import { APP_CONFIG } from '../config';
+import { useNavigate } from 'react-router-dom';
+
 export const GameForm: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeamId, setSelectedTeamId] = useState('');
   const [periodLength, setPeriodLength] = useState<10 | 20>(20);
   const [numPeriods, setNumPeriods] = useState<2 | 4>(2);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadTeams = async () => {
@@ -40,8 +42,7 @@ export const GameForm: React.FC = () => {
 
     try {
       await dbService.addGame(newGame);
-      // Redirect to game list
-      window.location.href = `${APP_CONFIG.basePath}/games`;
+      navigate('/games');
     } catch (error) {
       console.error('Error creating game:', error);
     }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Container, Navbar, Nav } from 'react-bootstrap';
 import { GameProvider } from './contexts/GameContext';
 import { TeamList } from './components/TeamList';
@@ -12,7 +12,7 @@ import { APP_CONFIG } from './config';
 
 function App() {
   return (
-    <Router basename={APP_CONFIG.basePath}>
+    <Router>
       <GameProvider>
         <Navbar bg="dark" variant="dark" expand="lg">
           <Container>
