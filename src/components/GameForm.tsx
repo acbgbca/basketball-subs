@@ -55,6 +55,7 @@ export const GameForm: React.FC = () => {
         <Form.Group className="mb-3">
           <Form.Label>Select Team</Form.Label>
           <Form.Select
+            data-testid="team-select"
             value={selectedTeamId}
             onChange={(e) => setSelectedTeamId(e.target.value)}
             required
@@ -71,6 +72,7 @@ export const GameForm: React.FC = () => {
         <Form.Group className="mb-3">
           <Form.Label>Game Format</Form.Label>
           <Form.Select
+            data-testid="game-format-select"
             value={`${numPeriods}-${periodLength}`}
             onChange={(e) => {
               const [periods, length] = e.target.value.split('-').map(Number);
