@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Container, Row, Col, Button, Table, Badge, Modal, Form } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 // import { useGame } from '../contexts/GameContext';
 import { Game, Player, Substitution } from '../types';
 import { dbService } from '../services/db';
@@ -120,7 +121,7 @@ export const GameView: React.FC = () => {
     } else {
       // Sub In
       const newSub: Substitution = {
-        id: crypto.randomUUID(),
+        id: uuidv4(),
         player,
         timeIn: timeRemaining,
         timeOut: null,
@@ -226,7 +227,7 @@ export const GameView: React.FC = () => {
           <h2>{game.team.name}</h2>
           <h3>Period {currentPeriod + 1}</h3>
           <div className="clock-display">
-            <h1>{formatTime(timeRemaining)}</h1>
+            <h1 data-testid="clock-display" data-seconds={timeRemaining}>{formatTime(timeRemaining)}</h1>
             <div className="d-flex gap-2 mb-3">
               <Button 
                 variant="outline-secondary" 
@@ -304,7 +305,7 @@ export const GameView: React.FC = () => {
             </thead>
             <tbody>
               {game.team.players.map(player => (
-                <tr key={player.id}>
+                <tr key={player.id} data-testid={`player-${player.id}`}>
                   <td>{player.number}</td>
                   <td>{player.name}</td>
                   <td>{formatTime(calculatePlayerMinutes(player.id))}</td>

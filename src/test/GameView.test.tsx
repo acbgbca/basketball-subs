@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { GameView } from '../components/GameView';
@@ -50,6 +50,15 @@ describe('Game Operations', () => {
       expect(screen.getByText('Test Team')).toBeInTheDocument();
     });
 
+
+    // Time adjustments
+    [-1, -10, -30, 1, 10, 30].forEach(adjustment => {
+      let timeBefore: number = parseInt(screen.getByTestId('clock-display').getAttribute('data-seconds') || '0');
+      const buttonText = `${adjustment > 0 ? '+' : ''}${adjustment}s`;
+      userEvent.click(screen.getByText(buttonText));
+      expect(screen.getByTestId('clock-display').getAttribute('data-seconds')).toBe((timeBefore + adjustment).toString());
+    });
+
     // Start/Stop clock
     userEvent.click(screen.getByText('Start'));
     expect(screen.getByText('Stop')).toBeInTheDocument();
@@ -57,21 +66,21 @@ describe('Game Operations', () => {
     userEvent.click(screen.getByText('Stop'));
     expect(screen.getByText('Start')).toBeInTheDocument();
 
-    // Time adjustments
-    [-1, -10, -30, 1, 10, 30].forEach(adjustment => {
-      const buttonText = `${adjustment > 0 ? '+' : ''}${adjustment}s`;
-      userEvent.click(screen.getByText(buttonText));
-    });
-
     // Substitutions
-    userEvent.click(screen.getByText('Sub In'));
+    let player1 = screen.getByTestId('player-1');
+    
+    userEvent.click(within(player1).getByText('Sub In'));
+    await waitFor(() => {
+      expect(within(player1).getByText('Sub Out')).toBeInTheDocument();
+
+    });
     await waitFor(() => {
       expect(mockUpdateGame).toHaveBeenCalledWith(
         expect.objectContaining({
           periods: expect.arrayContaining([
             expect.objectContaining({
               substitutions: expect.arrayContaining([
-                expect.objectContaining({ timeOut: null })
+                expect.objectContaining({ timeIn: expect.any(Number), timeOut: null })
               ])
             })
           ])
@@ -104,7 +113,7 @@ describe('Game Operations', () => {
           periods: expect.arrayContaining([
             expect.objectContaining({
               substitutions: expect.arrayContaining([
-                expect.objectContaining({ timeOut: 0 })
+                expect.objectContaining({ timeOut: expect.any(Number) })
               ])
             })
           ])
