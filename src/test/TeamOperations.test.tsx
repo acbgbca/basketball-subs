@@ -1,9 +1,11 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { TeamList } from '../components/TeamList';
 import { TeamView } from '../components/TeamView';
 import { TeamForm } from '../components/TeamForm';
 import { dbService } from '../services/db';
+import userEvent from '@testing-library/user-event';
+import { wait } from '@testing-library/user-event/dist/utils';
 
 jest.mock('../services/db');
 
@@ -49,6 +51,10 @@ describe('Team Operations', () => {
       </MemoryRouter>
     );
 
+    await waitFor(() => {
+      expect(screen.getByText('Test Team')).toBeInTheDocument();
+    });
+
     fireEvent.click(screen.getByText('Delete'));
     fireEvent.click(screen.getByText('Delete Team'));
 
@@ -61,17 +67,23 @@ describe('Team Operations', () => {
     const mockTeam = { 
       id: '1', 
       name: 'Test Team', 
-      players: [{ id: '1', name: 'Player 1', number: '23' }] 
+      players: []
     };
     
     jest.spyOn(dbService, 'getTeam').mockResolvedValue(mockTeam);
     const mockUpdateTeam = jest.spyOn(dbService, 'updateTeam');
 
     render(
-      <MemoryRouter>
-        <TeamView />
+      <MemoryRouter initialEntries={['/teams/1']}>
+        <Routes>
+          <Route path="/teams/:id" element={<TeamView />} />
+        </Routes>
       </MemoryRouter>
     );
+
+    await waitFor(() => {
+      expect(screen.getByText('Test Team')).toBeInTheDocument();
+    });
 
     // Add player
     fireEvent.click(screen.getByText('Add Player'));
@@ -81,7 +93,7 @@ describe('Team Operations', () => {
     fireEvent.change(screen.getByLabelText('Number'), {
       target: { value: '24' }
     });
-    fireEvent.click(screen.getByText('Add'));
+    fireEvent.click(screen.getByTestId('add-player-button'));
 
     await waitFor(() => {
       expect(mockUpdateTeam).toHaveBeenCalledWith(
@@ -94,7 +106,8 @@ describe('Team Operations', () => {
     });
 
     // Edit player
-    fireEvent.click(screen.getByText('Edit'));
+    let playerRow = screen.getByTestId('player-24')
+    fireEvent.click(within(playerRow).getByText('Edit'));
     fireEvent.change(screen.getByLabelText('Name'), {
       target: { value: 'Updated Player' }
     });
@@ -111,7 +124,7 @@ describe('Team Operations', () => {
     });
 
     // Delete player
-    fireEvent.click(screen.getByText('Remove'));
+    userEvent.click(within(playerRow).getByText('Remove'));
 
     await waitFor(() => {
       expect(mockUpdateTeam).toHaveBeenCalledWith(
