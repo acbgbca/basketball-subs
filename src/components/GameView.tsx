@@ -3,18 +3,11 @@ import { Container, Row, Col, Button, Table, Badge, Modal, Form } from 'react-bo
 import { useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 // import { useGame } from '../contexts/GameContext';
-import { Game, Player, Substitution } from '../types';
+import { Game, Substitution } from '../types';
 import { dbService } from '../services/db';
 
 export const GameView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  // const { 
-  //   currentTime,
-  //   isClockRunning,
-  //   startClock,
-  //   stopClock,
-  //   adjustClock
-  // } = useGame();
   
   const [game, setGame] = useState<Game | null>(null);
   const [activePlayers, setActivePlayers] = useState<Set<string>>(new Set());
@@ -36,6 +29,10 @@ export const GameView: React.FC = () => {
 
   // Add new state near other state declarations
   const [showEndPeriodModal, setShowEndPeriodModal] = useState(false);
+
+  const [showSubModal, setShowSubModal] = useState(false);
+  const [subInPlayers, setSubInPlayers] = useState<Set<string>>(new Set());
+  const [subOutPlayers, setSubOutPlayers] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const loadGame = async () => {
@@ -84,62 +81,6 @@ export const GameView: React.FC = () => {
         subTotal + (sub.secondsPlayed || 0), 0
       );
     }, 0);
-  };
-
-  const handleSubstitution = async (player: Player) => {
-    if (!game) return;
-
-    const isPlayerActive = activePlayers.has(player.id);
-    const currentPeriodData = game.periods[currentPeriod];
-
-    if (isPlayerActive) {
-      // Sub Out
-      const activeSub = currentPeriodData.substitutions.find(
-        sub => sub.player.id === player.id && sub.timeOut === null
-      );
-
-      if (activeSub) {
-        const updatedSub: Substitution = {
-          ...activeSub,
-          timeOut: timeRemaining,
-          secondsPlayed: (activeSub.timeIn - timeRemaining)
-        };
-
-        const updatedPeriods = [...game.periods];
-        updatedPeriods[currentPeriod].substitutions = currentPeriodData.substitutions.map(
-          sub => sub.id === activeSub.id ? updatedSub : sub
-        );
-
-        const updatedGame = { ...game, periods: updatedPeriods };
-        await dbService.updateGame(updatedGame);
-        setGame(updatedGame);
-
-        const newActivePlayers = new Set(activePlayers);
-        newActivePlayers.delete(player.id);
-        setActivePlayers(newActivePlayers);
-      }
-    } else {
-      // Sub In
-      const newSub: Substitution = {
-        id: uuidv4(),
-        player,
-        timeIn: timeRemaining,
-        timeOut: null,
-        secondsPlayed: null,
-        periodId: currentPeriodData.id
-      };
-
-      const updatedPeriods = [...game.periods];
-      updatedPeriods[currentPeriod].substitutions.push(newSub);
-
-      const updatedGame = { ...game, periods: updatedPeriods };
-      await dbService.updateGame(updatedGame);
-      setGame(updatedGame);
-
-      const newActivePlayers = new Set(activePlayers);
-      newActivePlayers.add(player.id);
-      setActivePlayers(newActivePlayers);
-    }
   };
 
   const handleEndPeriod = async () => {
@@ -218,6 +159,105 @@ export const GameView: React.FC = () => {
     setShowEditSubModal(false);
   };
 
+  const handleSubModalSubmit = async () => {
+    if (!game) return;
+  
+    const newActivePlayers = new Set(activePlayers);
+    const currentPeriodData = game.periods[currentPeriod];
+  
+    // Handle Sub Out
+    for (const playerId of subOutPlayers) {
+      const player = game.players.find(p => p.id === playerId);
+      if (player) {
+        const activeSub = currentPeriodData.substitutions.find(
+          sub => sub.player.id === player.id && sub.timeOut === null
+        );
+  
+        if (activeSub) {
+          const updatedSub: Substitution = {
+            ...activeSub,
+            timeOut: timeRemaining,
+            secondsPlayed: (activeSub.timeIn - timeRemaining)
+          };
+  
+          const updatedPeriods = [...game.periods];
+          updatedPeriods[currentPeriod].substitutions = currentPeriodData.substitutions.map(
+            sub => sub.id === activeSub.id ? updatedSub : sub
+          );
+  
+          const updatedGame = { ...game, periods: updatedPeriods };
+          await dbService.updateGame(updatedGame);
+          setGame(updatedGame);
+  
+          newActivePlayers.delete(player.id);
+        }
+      }
+    }
+  
+    // Handle Sub In
+    for (const playerId of subInPlayers) {
+      const player = game.players.find(p => p.id === playerId);
+      if (player) {
+        const newSub: Substitution = {
+          id: uuidv4(),
+          player,
+          timeIn: timeRemaining,
+          timeOut: null,
+          secondsPlayed: null,
+          periodId: currentPeriodData.id
+        };
+  
+        const updatedPeriods = [...game.periods];
+        updatedPeriods[currentPeriod].substitutions.push(newSub);
+  
+        const updatedGame = { ...game, periods: updatedPeriods };
+        await dbService.updateGame(updatedGame);
+        setGame(updatedGame);
+  
+        newActivePlayers.add(player.id);
+      }
+    }
+  
+    setActivePlayers(newActivePlayers);
+    setShowSubModal(false);
+    setSubInPlayers(new Set());
+    setSubOutPlayers(new Set());
+  };
+  
+  const handleSubButtonClick = (playerId: string, action: 'in' | 'out') => {
+    if (action === 'in') {
+      setSubInPlayers(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(playerId)) {
+          newSet.delete(playerId);
+        } else {
+          newSet.add(playerId);
+        }
+        return newSet;
+      });
+      setSubOutPlayers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(playerId);
+        return newSet;
+      });
+    } else {
+      setSubOutPlayers(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(playerId)) {
+          newSet.delete(playerId);
+        } else {
+          newSet.add(playerId);
+        }
+        return newSet;
+      });
+      setSubInPlayers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(playerId);
+        return newSet;
+      });
+    }
+  };
+
   if (!game) return <div>Loading...</div>;
 
   return (
@@ -286,6 +326,12 @@ export const GameView: React.FC = () => {
               >
                 End Period
               </Button>
+              <Button 
+                variant="primary"
+                onClick={() => setShowSubModal(true)}
+              >
+                Sub
+              </Button>
             </div>
           </div>
         </Col>
@@ -301,7 +347,6 @@ export const GameView: React.FC = () => {
                 <th>Name</th>
                 <th>Played</th>
                 <th>Status</th>
-                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -314,15 +359,6 @@ export const GameView: React.FC = () => {
                     <Badge bg={activePlayers.has(player.id) ? "success" : "secondary"}>
                       {activePlayers.has(player.id) ? "Court" : "Bench"}
                     </Badge>
-                  </td>
-                  <td>
-                    <Button
-                      variant={activePlayers.has(player.id) ? "danger" : "success"}
-                      size="sm"
-                      onClick={() => handleSubstitution(player)}
-                    >
-                      {activePlayers.has(player.id) ? "Sub Out" : "Sub In"}
-                    </Button>
                   </td>
                 </tr>
               ))}
@@ -448,6 +484,59 @@ export const GameView: React.FC = () => {
           </Button>
           <Button variant="warning" onClick={handleEndPeriod}>
             End Period
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Substitution Modal */}
+      <Modal show={showSubModal} onHide={() => setShowSubModal(false)} data-testid="substitution-modal">
+        <Modal.Header closeButton>
+          <Modal.Title>Manage Substitutions</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Row>
+            <Col>
+              <h5>On Court ({activePlayers.size + subInPlayers.size - subOutPlayers.size})</h5>
+              {Array.from(activePlayers).map(playerId => {
+                const player = game.players.find(p => p.id === playerId);
+                return player ? (
+                  <div key={player.id} className="d-flex justify-content-between align-items-center mb-2">
+                    <span>{player.name}</span>
+                    <Button 
+                      variant={subOutPlayers.has(player.id) ? "secondary" : "danger"} 
+                      size="sm" 
+                      onClick={() => handleSubButtonClick(player.id, 'out')}
+                    >
+                      {subOutPlayers.has(player.id) ? "Cancel Out" : "Out"}
+                    </Button>
+                  </div>
+                ) : null;
+              })}
+            </Col>
+            <Col>
+              <h5>On Bench</h5>
+              {game.players.filter(p => !activePlayers.has(p.id)).map(player => (
+                <div key={player.id} className="d-flex justify-content-between align-items-center mb-2">
+                  <span>{player.name}</span>
+                  <Button 
+                    variant={subInPlayers.has(player.id) ? "secondary" : "success"} 
+                    size="sm" 
+                    onClick={() => handleSubButtonClick(player.id, 'in')}
+                    disabled={!subInPlayers.has(player.id) && ((activePlayers.size + subInPlayers.size - subOutPlayers.size) >= 5)}
+                  >
+                    {subInPlayers.has(player.id) ? "Cancel In" : "In"}
+                  </Button>
+                </div>
+              ))}
+            </Col>
+          </Row>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowSubModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleSubModalSubmit}>
+            Done
           </Button>
         </Modal.Footer>
       </Modal>
