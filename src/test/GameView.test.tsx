@@ -22,7 +22,9 @@ describe('Game Operations', () => {
     date: new Date(),
     periods: [
       { id: '1', periodNumber: 1, length: 20, substitutions: [] }
-    ]
+    ],
+    opponent: 'Opponent Team',
+    players: mockTeam.players
   };
 
   beforeEach(() => {

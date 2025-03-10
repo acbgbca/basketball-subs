@@ -20,10 +20,12 @@ describe('Game Operations', () => {
   const mockGame = {
     id: '1',
     team: mockTeam,
+    opponent: 'Opponent Team',
     date: new Date(),
     periods: [
       { id: '1', periodNumber: 1, length: 20, substitutions: [] }
-    ]
+    ],
+    players: mockTeam.players
   };
 
   beforeEach(() => {
