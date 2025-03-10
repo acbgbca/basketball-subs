@@ -189,8 +189,9 @@ export const TeamView: React.FC = () => {
         <Form onSubmit={handleEditPlayer}>
           <Modal.Body>
             <Form.Group className="mb-3">
-              <Form.Label>Name</Form.Label>
+              <Form.Label htmlFor="playerName">Name</Form.Label>
               <Form.Control
+                id="playerName"
                 type="text"
                 value={playerForm.name}
                 onChange={(e) => setPlayerForm({ ...playerForm, name: e.target.value })}
