@@ -9,11 +9,11 @@
         "group:allNonMajor"
     ],
     "assignees": ["acbgbca"],
-    "prHourlyLimit": 1,
-    "prConcurrentLimit": 2,
+    "prHourlyLimit": 2,
+    "prConcurrentLimit": 4,
     "ignoreTests": false,
     "minimumReleaseAge": "3 days",
     "commitMessagePrefix": "[Renovate] ",
     "automerge": true,
-    "platformAutomerge": false
+    "platformAutomerge": true
 }
