@@ -73,8 +73,8 @@ describe('Game Operations', () => {
       expect(screen.getByText('Manage Substitutions')).toBeInTheDocument();
     });
 
-    let player1 = screen.getByText('Player 1');
-    userEvent.click(within(player1.closest('div')!).getByText('Out'));
+    let player1 = within(screen.getByTestId('substitution-modal')).getByText('Player 1');
+    userEvent.click(within(player1.closest('div')!).getByText('In'));
     userEvent.click(screen.getByText('Done'));
 
     await waitFor(() => {
@@ -83,7 +83,7 @@ describe('Game Operations', () => {
           periods: expect.arrayContaining([
             expect.objectContaining({
               substitutions: expect.arrayContaining([
-                expect.objectContaining({ timeOut: expect.any(Number) })
+                expect.objectContaining({ timeIn: expect.any(Number) })
               ])
             })
           ])
@@ -96,8 +96,8 @@ describe('Game Operations', () => {
       expect(screen.getByText('Manage Substitutions')).toBeInTheDocument();
     });
 
-    let player2 = screen.getByText('Player 2');
-    userEvent.click(within(player2.closest('div')!).getByText('In'));
+    player1 = within(screen.getByTestId('substitution-modal')).getByText('Player 1');
+    userEvent.click(within(player1.closest('div')!).getByText('Out'));
     userEvent.click(screen.getByText('Done'));
 
     await waitFor(() => {
@@ -106,7 +106,7 @@ describe('Game Operations', () => {
           periods: expect.arrayContaining([
             expect.objectContaining({
               substitutions: expect.arrayContaining([
-                expect.objectContaining({ timeIn: expect.any(Number) })
+                expect.objectContaining({ timeOut: expect.any(Number) })
               ])
             })
           ])
