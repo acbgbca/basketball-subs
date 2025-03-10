@@ -32,8 +32,9 @@ export const TeamForm: React.FC = () => {
       <h2>Create New Team</h2>
       <Form onSubmit={handleSubmit}>
         <Form.Group className="mb-3">
-          <Form.Label>Team Name</Form.Label>
+          <Form.Label htmlFor="teamName">Team Name</Form.Label>
           <Form.Control
+            id="teamName"
             type="text"
             value={teamName}
             onChange={(e) => setTeamName(e.target.value)}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Button, Table, Form, Modal } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 import { Team, Player } from '../types';
 import { dbService } from '../services/db';
 
@@ -30,7 +31,7 @@ export const TeamView: React.FC = () => {
     if (!team) return;
 
     const newPlayer: Player = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       name: playerForm.name,
       number: playerForm.number
     };
@@ -114,7 +115,7 @@ export const TeamView: React.FC = () => {
             </thead>
             <tbody>
               {team.players.map(player => (
-                <tr key={player.id}>
+                <tr key={player.id} data-testid={`player-${player.number}`}>
                   <td>{player.number}</td>
                   <td>{player.name}</td>
                   <td>
@@ -149,8 +150,9 @@ export const TeamView: React.FC = () => {
         <Form onSubmit={handleAddPlayer}>
           <Modal.Body>
             <Form.Group className="mb-3">
-              <Form.Label>Name</Form.Label>
+              <Form.Label htmlFor="playerName">Name</Form.Label>
               <Form.Control
+                id="playerName"
                 type="text"
                 value={playerForm.name}
                 onChange={(e) => setPlayerForm({ ...playerForm, name: e.target.value })}
@@ -158,8 +160,9 @@ export const TeamView: React.FC = () => {
               />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Number</Form.Label>
+              <Form.Label htmlFor="playerNumber">Number</Form.Label>
               <Form.Control
+                id="playerNumber"
                 type="text"
                 value={playerForm.number}
                 onChange={(e) => setPlayerForm({ ...playerForm, number: e.target.value })}
@@ -171,7 +174,7 @@ export const TeamView: React.FC = () => {
             <Button variant="secondary" onClick={() => setShowAddModal(false)}>
               Cancel
             </Button>
-            <Button variant="primary" type="submit">
+            <Button variant="primary" type="submit" data-testid="add-player-button">
               Add Player
             </Button>
           </Modal.Footer>
