@@ -15,5 +15,5 @@
     "minimumReleaseAge": "3 days",
     "commitMessagePrefix": "[Renovate] ",
     "automerge": true,
-    "platformAutomerge": true
+    "platformAutomerge": false
 }
