@@ -142,4 +142,96 @@ describe('Game Operations', () => {
       );
     });
   });
+
+  test('create game with multiple fill in players', async () => {
+    const mockAddGame = jest.spyOn(dbService, 'addGame');
+
+    render(
+      <HashRouter>
+        <GameForm />
+      </HashRouter>
+    );
+
+    // Wait for the team to be loaded
+    await waitFor(() => {
+      expect(dbService.getTeams).toHaveBeenCalledTimes(1);
+    });
+
+    // Fill out the form
+    await userEvent.type(screen.getByLabelText('Opponent'), 'Opponent Team');
+    await userEvent.selectOptions(screen.getByTestId('team-select'), '1');
+    await userEvent.click(screen.getByText('Add Fill in Player'));
+    await userEvent.type(screen.getByLabelText('Fill in Player Name'), 'Fill In Player 1');
+    await userEvent.type(screen.getByLabelText('Fill in Player Number'), '99');
+    await userEvent.click(screen.getByText('Add Player'));
+    // Wait for page to reload
+    await waitFor(() => {
+      expect(screen.getByText('Add Fill in Player')).toBeVisible();
+    });
+    await userEvent.click(screen.getByText('Add Fill in Player'));
+    await userEvent.type(screen.getByLabelText('Fill in Player Name'), 'Fill In Player 2');
+    await userEvent.type(screen.getByLabelText('Fill in Player Number'), '98');
+    await userEvent.click(screen.getByText('Add Player'));
+    await userEvent.click(screen.getByText('Create Game'));
+
+    await waitFor(() => {
+      expect(mockAddGame).toHaveBeenCalledWith(
+        expect.objectContaining({
+          opponent: 'Opponent Team',
+          players: expect.arrayContaining([
+            expect.objectContaining({ name: 'Fill In Player 1', number: '99' }),
+            expect.objectContaining({ name: 'Fill In Player 2', number: '98' })
+          ])
+        })
+      );
+    });
+  });
+
+  test('edit and remove fill in player', async () => {
+    const mockAddGame = jest.spyOn(dbService, 'addGame');
+
+    render(
+      <HashRouter>
+        <GameForm />
+      </HashRouter>
+    );
+
+    // Wait for the team to be loaded
+    await waitFor(() => {
+      expect(dbService.getTeams).toHaveBeenCalledTimes(1);
+    });
+
+    // Add fill in player
+    await userEvent.click(screen.getByText('Add Fill in Player'));
+    await userEvent.type(screen.getByLabelText('Fill in Player Name'), 'Fill In Player 1');
+    await userEvent.type(screen.getByLabelText('Fill in Player Number'), '99');
+    await userEvent.click(screen.getByText('Add Player'));
+
+    // Edit fill in player
+    await userEvent.click(screen.getByText('Edit'));
+    await userEvent.clear(screen.getByLabelText('Fill in Player Name'));
+    await userEvent.type(screen.getByLabelText('Fill in Player Name'), 'Edited Fill In Player 1');
+    await userEvent.clear(screen.getByLabelText('Fill in Player Number'));
+    await userEvent.type(screen.getByLabelText('Fill in Player Number'), '100');
+    await userEvent.click(screen.getByText('Save Changes'));
+
+    // Remove fill in player
+    await userEvent.click(screen.getByText('Remove'));
+
+    // Fill out the form
+    await userEvent.type(screen.getByLabelText('Opponent'), 'Opponent Team');
+    await userEvent.selectOptions(screen.getByTestId('team-select'), '1');
+    await userEvent.click(screen.getByText('Create Game'));
+
+    await waitFor(() => {
+      expect(mockAddGame).toHaveBeenCalledWith(
+        expect.objectContaining({
+          opponent: 'Opponent Team',
+          players: expect.not.arrayContaining([
+            expect.objectContaining({ name: 'Edited Fill In Player 1', number: '100' })
+          ])
+        })
+      );
+    });
+  });
 });
