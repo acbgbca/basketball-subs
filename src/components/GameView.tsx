@@ -37,6 +37,10 @@ export const GameView: React.FC = () => {
   // Add new state near other state declarations
   const [showEndPeriodModal, setShowEndPeriodModal] = useState(false);
 
+  const [showSubModal, setShowSubModal] = useState(false);
+  const [subInPlayers, setSubInPlayers] = useState<Set<string>>(new Set());
+  const [subOutPlayers, setSubOutPlayers] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     const loadGame = async () => {
       if (id) {
@@ -218,6 +222,89 @@ export const GameView: React.FC = () => {
     setShowEditSubModal(false);
   };
 
+  const handleSubModalSubmit = async () => {
+    if (!game) return;
+  
+    const newActivePlayers = new Set(activePlayers);
+    const currentPeriodData = game.periods[currentPeriod];
+  
+    // Handle Sub Out
+    for (const playerId of subOutPlayers) {
+      const player = game.players.find(p => p.id === playerId);
+      if (player) {
+        const activeSub = currentPeriodData.substitutions.find(
+          sub => sub.player.id === player.id && sub.timeOut === null
+        );
+  
+        if (activeSub) {
+          const updatedSub: Substitution = {
+            ...activeSub,
+            timeOut: timeRemaining,
+            secondsPlayed: (activeSub.timeIn - timeRemaining)
+          };
+  
+          const updatedPeriods = [...game.periods];
+          updatedPeriods[currentPeriod].substitutions = currentPeriodData.substitutions.map(
+            sub => sub.id === activeSub.id ? updatedSub : sub
+          );
+  
+          const updatedGame = { ...game, periods: updatedPeriods };
+          await dbService.updateGame(updatedGame);
+          setGame(updatedGame);
+  
+          newActivePlayers.delete(player.id);
+        }
+      }
+    }
+  
+    // Handle Sub In
+    for (const playerId of subInPlayers) {
+      const player = game.players.find(p => p.id === playerId);
+      if (player) {
+        const newSub: Substitution = {
+          id: uuidv4(),
+          player,
+          timeIn: timeRemaining,
+          timeOut: null,
+          secondsPlayed: null,
+          periodId: currentPeriodData.id
+        };
+  
+        const updatedPeriods = [...game.periods];
+        updatedPeriods[currentPeriod].substitutions.push(newSub);
+  
+        const updatedGame = { ...game, periods: updatedPeriods };
+        await dbService.updateGame(updatedGame);
+        setGame(updatedGame);
+  
+        newActivePlayers.add(player.id);
+      }
+    }
+  
+    setActivePlayers(newActivePlayers);
+    setShowSubModal(false);
+    setSubInPlayers(new Set());
+    setSubOutPlayers(new Set());
+  };
+  
+  const handleSubButtonClick = (playerId: string, action: 'in' | 'out') => {
+    if (action === 'in') {
+      setSubInPlayers(prev => new Set(prev).add(playerId));
+      setSubOutPlayers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(playerId);
+        return newSet;
+      });
+    } else {
+      setSubOutPlayers(prev => new Set(prev).add(playerId));
+      setSubInPlayers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(playerId);
+        return newSet;
+      });
+    }
+  };
+
   if (!game) return <div>Loading...</div>;
 
   return (
@@ -286,6 +373,12 @@ export const GameView: React.FC = () => {
               >
                 End Period
               </Button>
+              <Button 
+                variant="primary"
+                onClick={() => setShowSubModal(true)}
+              >
+                Sub
+              </Button>
             </div>
           </div>
         </Col>
@@ -301,7 +394,6 @@ export const GameView: React.FC = () => {
                 <th>Name</th>
                 <th>Played</th>
                 <th>Status</th>
-                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -314,15 +406,6 @@ export const GameView: React.FC = () => {
                     <Badge bg={activePlayers.has(player.id) ? "success" : "secondary"}>
                       {activePlayers.has(player.id) ? "Court" : "Bench"}
                     </Badge>
-                  </td>
-                  <td>
-                    <Button
-                      variant={activePlayers.has(player.id) ? "danger" : "success"}
-                      size="sm"
-                      onClick={() => handleSubstitution(player)}
-                    >
-                      {activePlayers.has(player.id) ? "Sub Out" : "Sub In"}
-                    </Button>
                   </td>
                 </tr>
               ))}
@@ -448,6 +531,46 @@ export const GameView: React.FC = () => {
           </Button>
           <Button variant="warning" onClick={handleEndPeriod}>
             End Period
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Substitution Modal */}
+      <Modal show={showSubModal} onHide={() => setShowSubModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Manage Substitutions</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Row>
+            <Col>
+              <h5>On Court</h5>
+              {Array.from(activePlayers).map(playerId => {
+                const player = game.players.find(p => p.id === playerId);
+                return player ? (
+                  <div key={player.id} className="d-flex justify-content-between align-items-center mb-2">
+                    <span>{player.name}</span>
+                    <Button variant="danger" size="sm" onClick={() => handleSubButtonClick(player.id, 'out')}>Out</Button>
+                  </div>
+                ) : null;
+              })}
+            </Col>
+            <Col>
+              <h5>On Bench</h5>
+              {game.players.filter(p => !activePlayers.has(p.id)).map(player => (
+                <div key={player.id} className="d-flex justify-content-between align-items-center mb-2">
+                  <span>{player.name}</span>
+                  <Button variant="success" size="sm" onClick={() => handleSubButtonClick(player.id, 'in')}>In</Button>
+                </div>
+              ))}
+            </Col>
+          </Row>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowSubModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleSubModalSubmit}>
+            Done
           </Button>
         </Modal.Footer>
       </Modal>

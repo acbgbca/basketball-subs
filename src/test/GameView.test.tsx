@@ -52,7 +52,6 @@ describe('Game Operations', () => {
       expect(screen.getByText('Test Team')).toBeInTheDocument();
     });
 
-
     // Time adjustments
     [-1, -10, -30, 1, 10, 30].forEach(adjustment => {
       let timeBefore: number = parseInt(screen.getByTestId('clock-display').getAttribute('data-seconds') || '0');
@@ -69,28 +68,15 @@ describe('Game Operations', () => {
     expect(screen.getByText('Start')).toBeInTheDocument();
 
     // Substitutions
-    let player1 = screen.getByTestId('player-1');
-    
-    userEvent.click(within(player1).getByText('Sub In'));
+    userEvent.click(screen.getByText('Sub'));
     await waitFor(() => {
-      expect(within(player1).getByText('Sub Out')).toBeInTheDocument();
-
-    });
-    await waitFor(() => {
-      expect(mockUpdateGame).toHaveBeenCalledWith(
-        expect.objectContaining({
-          periods: expect.arrayContaining([
-            expect.objectContaining({
-              substitutions: expect.arrayContaining([
-                expect.objectContaining({ timeIn: expect.any(Number), timeOut: null })
-              ])
-            })
-          ])
-        })
-      );
+      expect(screen.getByText('Manage Substitutions')).toBeInTheDocument();
     });
 
-    userEvent.click(screen.getByText('Sub Out'));
+    let player1 = screen.getByText('Player 1');
+    userEvent.click(within(player1.closest('div')!).getByText('Out'));
+    userEvent.click(screen.getByText('Done'));
+
     await waitFor(() => {
       expect(mockUpdateGame).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -98,6 +84,29 @@ describe('Game Operations', () => {
             expect.objectContaining({
               substitutions: expect.arrayContaining([
                 expect.objectContaining({ timeOut: expect.any(Number) })
+              ])
+            })
+          ])
+        })
+      );
+    });
+
+    userEvent.click(screen.getByText('Sub'));
+    await waitFor(() => {
+      expect(screen.getByText('Manage Substitutions')).toBeInTheDocument();
+    });
+
+    let player2 = screen.getByText('Player 2');
+    userEvent.click(within(player2.closest('div')!).getByText('In'));
+    userEvent.click(screen.getByText('Done'));
+
+    await waitFor(() => {
+      expect(mockUpdateGame).toHaveBeenCalledWith(
+        expect.objectContaining({
+          periods: expect.arrayContaining([
+            expect.objectContaining({
+              substitutions: expect.arrayContaining([
+                expect.objectContaining({ timeIn: expect.any(Number) })
               ])
             })
           ])
@@ -123,4 +132,4 @@ describe('Game Operations', () => {
       );
     });
   });
-}); 
+});
