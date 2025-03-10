@@ -3,7 +3,10 @@
     "extends": [
         "config:best-practices",
         "schedule:automergeDaily",
-        "group:all"
+        "group:nodeJs",
+        "group:react",
+        "group:test",
+        "group:allNonMajor"
     ],
     "assignees": ["acbgbca"],
     "prHourlyLimit": 1,
