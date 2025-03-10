@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Button, Container } from 'react-bootstrap';
 import { v4 as uuidv4 } from 'uuid';
-import { Game, Team, Player } from '../types';
+import { Game, Team } from '../types';
 import { dbService } from '../services/db';
 import { useNavigate } from 'react-router-dom';
 
@@ -73,8 +73,9 @@ export const GameForm: React.FC = () => {
       <h2>Create New Game</h2>
       <Form onSubmit={handleSubmit}>
         <Form.Group className="mb-3">
-          <Form.Label>Select Team</Form.Label>
+          <Form.Label htmlFor="team-select">Select Team</Form.Label>
           <Form.Select
+            id="team-select"
             data-testid="team-select"
             value={selectedTeam?.id || ''}
             onChange={(e) => handleTeamChange(e.target.value)}
@@ -106,6 +107,7 @@ export const GameForm: React.FC = () => {
             {selectedTeam.players.map(player => (
               <Form.Check
                 key={player.id}
+                id={`player-${player.id}`}
                 type="checkbox"
                 label={`${player.number} - ${player.name}`}
                 checked={selectedPlayers.has(player.id)}
@@ -116,8 +118,9 @@ export const GameForm: React.FC = () => {
         )}
 
         <Form.Group className="mb-3">
-          <Form.Label>Game Format</Form.Label>
+          <Form.Label htmlFor="game-format-select">Game Format</Form.Label>
           <Form.Select
+            id="game-format-select"
             data-testid="game-format-select"
             value={`${numPeriods}-${periodLength}`}
             onChange={(e) => {

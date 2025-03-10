@@ -225,6 +225,7 @@ export const GameView: React.FC = () => {
       <Row className="mb-4">
         <Col>
           <h2>{game.team.name}</h2>
+          <h4 className="text-muted">vs {game.opponent}</h4>
           <h3>Period {currentPeriod + 1}</h3>
           <div className="clock-display">
             <h1 data-testid="clock-display" data-seconds={timeRemaining}>{formatTime(timeRemaining)}</h1>
