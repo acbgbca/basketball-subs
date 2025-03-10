@@ -147,7 +147,7 @@ export const GameView: React.FC = () => {
 
     // Sub out all active players with timeOut = 0
     const promises = Array.from(activePlayers).map(playerId => {
-      const player = game.team.players.find(p => p.id === playerId);
+      const player = game.players.find(p => p.id === playerId);
       if (player) {
         const currentPeriodData = game.periods[currentPeriod];
         const activeSub = currentPeriodData.substitutions.find(
@@ -225,6 +225,7 @@ export const GameView: React.FC = () => {
       <Row className="mb-4">
         <Col>
           <h2>{game.team.name}</h2>
+          <h4 className="text-muted">vs {game.opponent}</h4>
           <h3>Period {currentPeriod + 1}</h3>
           <div className="clock-display">
             <h1 data-testid="clock-display" data-seconds={timeRemaining}>{formatTime(timeRemaining)}</h1>
@@ -304,7 +305,7 @@ export const GameView: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {game.team.players.map(player => (
+              {game.players.map(player => (
                 <tr key={player.id} data-testid={`player-${player.id}`}>
                   <td>{player.number}</td>
                   <td>{player.name}</td>
@@ -452,4 +453,4 @@ export const GameView: React.FC = () => {
       </Modal>
     </Container>
   );
-}; 
+};

@@ -7,7 +7,9 @@ import { useNavigate } from 'react-router-dom';
 
 export const GameForm: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([]);
-  const [selectedTeamId, setSelectedTeamId] = useState('');
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
+  const [opponent, setOpponent] = useState('');
+  const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set());
   const [periodLength, setPeriodLength] = useState<10 | 20>(20);
   const [numPeriods, setNumPeriods] = useState<2 | 4>(2);
   const navigate = useNavigate();
@@ -20,10 +22,26 @@ export const GameForm: React.FC = () => {
     loadTeams();
   }, []);
 
+  const handleTeamChange = (teamId: string) => {
+    const team = teams.find(t => t.id === teamId) || null;
+    setSelectedTeam(team);
+    setSelectedPlayers(new Set());
+  };
+
+  const handlePlayerToggle = (playerId: string) => {
+    setSelectedPlayers(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(playerId)) {
+        newSet.delete(playerId);
+      } else {
+        newSet.add(playerId);
+      }
+      return newSet;
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const selectedTeam = teams.find(team => team.id === selectedTeamId);
     if (!selectedTeam) return;
 
     const periods = Array(numPeriods).fill(null).map((_, index) => ({
@@ -37,6 +55,8 @@ export const GameForm: React.FC = () => {
       id: uuidv4(),
       date: new Date(),
       team: selectedTeam,
+      opponent,
+      players: selectedTeam.players.filter(player => selectedPlayers.has(player.id)),
       periods
     };
 
@@ -53,11 +73,12 @@ export const GameForm: React.FC = () => {
       <h2>Create New Game</h2>
       <Form onSubmit={handleSubmit}>
         <Form.Group className="mb-3">
-          <Form.Label>Select Team</Form.Label>
+          <Form.Label htmlFor="team-select">Select Team</Form.Label>
           <Form.Select
+            id="team-select"
             data-testid="team-select"
-            value={selectedTeamId}
-            onChange={(e) => setSelectedTeamId(e.target.value)}
+            value={selectedTeam?.id || ''}
+            onChange={(e) => handleTeamChange(e.target.value)}
             required
           >
             <option value="">Choose a team...</option>
@@ -70,8 +91,36 @@ export const GameForm: React.FC = () => {
         </Form.Group>
 
         <Form.Group className="mb-3">
-          <Form.Label>Game Format</Form.Label>
+          <Form.Label htmlFor="opponent">Opponent</Form.Label>
+          <Form.Control
+            id="opponent"
+            type="text"
+            value={opponent}
+            onChange={(e) => setOpponent(e.target.value)}
+            required
+          />
+        </Form.Group>
+
+        {selectedTeam && (
+          <Form.Group className="mb-3">
+            <Form.Label>Players</Form.Label>
+            {selectedTeam.players.map(player => (
+              <Form.Check
+                key={player.id}
+                id={`player-${player.id}`}
+                type="checkbox"
+                label={`${player.number} - ${player.name}`}
+                checked={selectedPlayers.has(player.id)}
+                onChange={() => handlePlayerToggle(player.id)}
+              />
+            ))}
+          </Form.Group>
+        )}
+
+        <Form.Group className="mb-3">
+          <Form.Label htmlFor="game-format-select">Game Format</Form.Label>
           <Form.Select
+            id="game-format-select"
             data-testid="game-format-select"
             value={`${numPeriods}-${periodLength}`}
             onChange={(e) => {
@@ -92,4 +141,4 @@ export const GameForm: React.FC = () => {
       </Form>
     </Container>
   );
-}; 
+};

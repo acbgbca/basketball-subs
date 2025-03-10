@@ -30,5 +30,7 @@ export interface Game {
   id: string;
   date: Date;
   team: Team;
+  opponent: string;
+  players: Player[];
   periods: Period[];
-} 
+}

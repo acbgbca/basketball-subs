@@ -51,6 +51,7 @@ export const GameList: React.FC = () => {
             <Card>
               <Card.Body>
                 <Card.Title>{game.team.name}</Card.Title>
+                <Card.Subtitle className="mb-2 text-muted">vs {game.opponent}</Card.Subtitle>
                 <Card.Text>
                   Date: {new Date(game.date).toLocaleDateString()}
                   <br />
@@ -97,4 +98,4 @@ export const GameList: React.FC = () => {
       </Modal>
     </Container>
   );
-}; 
+};
