@@ -5,7 +5,6 @@ import { v4 as uuidv4 } from 'uuid';
 // import { useGame } from '../contexts/GameContext';
 import { Game, Substitution } from '../types';
 import { dbService } from '../services/db';
-import { on } from 'events';
 
 export const GameView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
