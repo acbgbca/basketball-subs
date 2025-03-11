@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { TeamList } from '../components/TeamList';
 import { TeamView } from '../components/TeamView';
@@ -23,11 +23,9 @@ describe('Team Operations', () => {
       </MemoryRouter>
     );
 
-    fireEvent.change(screen.getByLabelText('Team Name'), {
-      target: { value: 'Test Team' }
-    });
+    userEvent.type(screen.getByLabelText('Team Name'), 'Test Team');
 
-    fireEvent.click(screen.getByText('Create Team'));
+    userEvent.click(screen.getByText('Create Team'));
 
     await waitFor(() => {
       expect(mockAddTeam).toHaveBeenCalledWith(
@@ -55,8 +53,8 @@ describe('Team Operations', () => {
       expect(screen.getByText('Test Team')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('Delete'));
-    fireEvent.click(screen.getByText('Delete Team'));
+    userEvent.click(screen.getByText('Delete'));
+    userEvent.click(screen.getByText('Delete Team'));
 
     await waitFor(() => {
       expect(mockDeleteTeam).toHaveBeenCalledWith('1');
@@ -86,14 +84,10 @@ describe('Team Operations', () => {
     });
 
     // Add player
-    fireEvent.click(screen.getByText('Add Player'));
-    fireEvent.change(screen.getByLabelText('Name'), {
-      target: { value: 'New Player' }
-    });
-    fireEvent.change(screen.getByLabelText('Number'), {
-      target: { value: '24' }
-    });
-    fireEvent.click(screen.getByTestId('add-player-button'));
+    await userEvent.click(screen.getByText('Add Player'));
+    await userEvent.type(screen.getByLabelText('Name'), 'New Player');
+    await userEvent.type(screen.getByLabelText('Number'), '24');
+    await userEvent.click(screen.getByTestId('add-player-button'));
 
     await waitFor(() => {
       expect(mockUpdateTeam).toHaveBeenCalledWith(
@@ -107,11 +101,10 @@ describe('Team Operations', () => {
 
     // Edit player
     let playerRow = screen.getByTestId('player-24')
-    fireEvent.click(within(playerRow).getByText('Edit'));
-    fireEvent.change(screen.getByLabelText('Name'), {
-      target: { value: 'Updated Player' }
-    });
-    fireEvent.click(screen.getByText('Save Changes'));
+    await userEvent.click(within(playerRow).getByText('Edit'));
+    await userEvent.clear(screen.getByLabelText('Name'));
+    await userEvent.type(screen.getByLabelText('Name'), 'Updated Player')
+    await userEvent.click(screen.getByText('Save Changes'));
 
     await waitFor(() => {
       expect(mockUpdateTeam).toHaveBeenCalledWith(
@@ -124,7 +117,7 @@ describe('Team Operations', () => {
     });
 
     // Delete player
-    userEvent.click(within(playerRow).getByText('Remove'));
+    await userEvent.click(within(playerRow).getByText('Remove'));
 
     await waitFor(() => {
       expect(mockUpdateTeam).toHaveBeenCalledWith(
