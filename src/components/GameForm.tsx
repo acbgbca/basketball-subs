@@ -106,7 +106,10 @@ export const GameForm: React.FC = () => {
       team: selectedTeam,
       opponent,
       players: [...selectedTeamPlayers, ...fillInPlayersList],
-      periods
+      periods,
+      activePlayers: [],
+      currentPeriod: 0,
+      isRunning: false
     };
 
     try {

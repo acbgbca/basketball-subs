@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Container, Row, Col, Button, Table, Badge, Modal, Form } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
-// import { useGame } from '../contexts/GameContext';
 import { Game, Substitution } from '../types';
 import { dbService } from '../services/db';
 
@@ -39,26 +38,67 @@ export const GameView: React.FC = () => {
       if (id) {
         const gameData = await dbService.getGame(id);
         setGame(gameData);
-        // Initialize timeRemaining with the period length in seconds
-        const periodLengthInSeconds = gameData.periods[currentPeriod].length * 60;
-        setTimeRemaining(periodLengthInSeconds);
+        // Initialize states from persisted data
+        setActivePlayers(new Set(gameData.activePlayers || []));
+        setCurrentPeriod(gameData.currentPeriod || 0);
+        setIsRunning(gameData.isRunning || false);
+        
+        // Calculate time remaining based on period start time or elapsed time
+        if (gameData.isRunning && gameData.periodStartTime) {
+          const elapsedSeconds = Math.floor((Date.now() - gameData.periodStartTime) / 1000);
+          const periodLength = gameData.periods[currentPeriod].length * 60;
+          setTimeRemaining(Math.max(0, periodLength - elapsedSeconds));
+          console.log(elapsedSeconds);
+        } else if (gameData.periodTimeElapsed) {
+          const periodLength = gameData.periods[currentPeriod].length * 60;
+          setTimeRemaining(Math.max(0, periodLength - gameData.periodTimeElapsed));
+        } else {
+          setTimeRemaining(gameData.periods[currentPeriod].length * 60);
+        }
+        console.log(gameData);
+        console.log(gameData.periods[currentPeriod].length * 60);
+        console.log(timeRemaining);
       }
     };
     loadGame();
-  }, [id, currentPeriod]);
+  }, [id]);
+
+  // Update persistence when state changes
+  const updateGameState = async () => {
+    if (!game) return;
+    const updatedGame = {
+      ...game,
+      activePlayers: Array.from(activePlayers),
+      currentPeriod,
+      isRunning,
+      periodStartTime: isRunning ? Date.now() - ((game.periods[currentPeriod].length * 60) - timeRemaining) * 1000 : undefined,
+      periodTimeElapsed: !isRunning ? game.periods[currentPeriod].length * 60 - timeRemaining : undefined,
+    };
+    await dbService.updateGame(updatedGame);
+    setGame(updatedGame);
+  };
 
   useEffect(() => {
+    updateGameState();
+  }, [activePlayers, currentPeriod, isRunning]);
+
+  // Modify the timer effect to be more accurate
+  useEffect(() => {
     if (isRunning) {
+      const startTime = Date.now();
+      const initialRemaining = timeRemaining;
+      
       timerRef.current = setInterval(() => {
-        setTimeRemaining(prev => {
-          if (prev <= 0) {
-            clearInterval(timerRef.current as NodeJS.Timeout);
-            setIsRunning(false);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const newRemaining = Math.max(0, initialRemaining - elapsed);
+        
+        setTimeRemaining(newRemaining);
+        
+        if (newRemaining <= 0) {
+          clearInterval(timerRef.current as NodeJS.Timeout);
+          setIsRunning(false);
+        }
+      }, 100); // Update more frequently for smoother countdown
     } else {
       clearInterval(timerRef.current as NodeJS.Timeout);
     }
