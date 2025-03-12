@@ -1,4 +1,7 @@
 name: Pull Requests
+permissions:
+  contents: read
+  pull-requests: write
 
 on:
   pull_request:
@@ -27,7 +30,7 @@ jobs:
     - name: Build
       run: npm run build
       
-    # - name: Run tests
-    #   run: npm test
-    #   env:
-    #     CI: true 
+    - name: Run tests
+      run: npm test
+      env:
+        CI: true 
