@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Container, Row, Col, Button, Table, Badge, Modal, Form } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
-// import { useGame } from '../contexts/GameContext';
 import { Game, Substitution } from '../types';
 import { dbService } from '../services/db';
 
@@ -17,6 +16,8 @@ export const GameView: React.FC = () => {
   const [showEditSubModal, setShowEditSubModal] = useState(false);
   const [selectedSub, setSelectedSub] = useState<Substitution | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const justAdjustedRef = useRef(false); // Add this new ref
+  const baseTimeRef = useRef<{startTime: number; initialRemaining: number} | null>(null);
 
   // Form state for editing substitutions
   const [editForm, setEditForm] = useState({
@@ -39,30 +40,79 @@ export const GameView: React.FC = () => {
       if (id) {
         const gameData = await dbService.getGame(id);
         setGame(gameData);
-        // Initialize timeRemaining with the period length in seconds
-        const periodLengthInSeconds = gameData.periods[currentPeriod].length * 60;
-        setTimeRemaining(periodLengthInSeconds);
+        // Initialize states from persisted data
+        setActivePlayers(new Set(gameData.activePlayers || []));
+        setCurrentPeriod(gameData.currentPeriod || 0);
+        setIsRunning(gameData.isRunning || false);
+        
+        // Calculate time remaining based on period start time or elapsed time
+        if (gameData.isRunning && gameData.periodStartTime) {
+          const elapsedSeconds = Math.floor((Date.now() - gameData.periodStartTime) / 1000);
+          const periodLength = gameData.periods[currentPeriod].length * 60;
+          setTimeRemaining(Math.max(0, periodLength - elapsedSeconds));
+        } else if (gameData.periodTimeElapsed) {
+          const periodLength = gameData.periods[currentPeriod].length * 60;
+          setTimeRemaining(Math.max(0, periodLength - gameData.periodTimeElapsed));
+        } else {
+          setTimeRemaining(gameData.periods[currentPeriod].length * 60);
+        }
       }
     };
     loadGame();
-  }, [id, currentPeriod]);
+  }, [id]);
+
+  // Update persistence when state changes
+  const updateGameState = async () => {
+    if (!game) return;
+    const updatedGame = {
+      ...game,
+      activePlayers: Array.from(activePlayers),
+      currentPeriod,
+      isRunning,
+      periodStartTime: isRunning ? Date.now() - ((game.periods[currentPeriod].length * 60) - timeRemaining) * 1000 : undefined,
+      periodTimeElapsed: !isRunning ? game.periods[currentPeriod].length * 60 - timeRemaining : undefined,
+    };
+    await dbService.updateGame(updatedGame);
+    setGame(updatedGame);
+  };
 
   useEffect(() => {
+    updateGameState();
+  }, [activePlayers, currentPeriod, isRunning]);
+
+  // Modify the timer effect to be more accurate
+  useEffect(() => {
     if (isRunning) {
+      // Initialize or update the base time ref
+      if (!baseTimeRef.current || justAdjustedRef.current) {
+        baseTimeRef.current = {
+          startTime: Date.now(),
+          initialRemaining: timeRemaining
+        };
+        justAdjustedRef.current = false;
+      }
+      
       timerRef.current = setInterval(() => {
-        setTimeRemaining(prev => {
-          if (prev <= 0) {
-            clearInterval(timerRef.current as NodeJS.Timeout);
-            setIsRunning(false);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+        if (!baseTimeRef.current) return;
+        
+        const elapsed = Math.floor((Date.now() - baseTimeRef.current.startTime) / 1000);
+        const newRemaining = Math.max(0, baseTimeRef.current.initialRemaining - elapsed);
+        
+        setTimeRemaining(newRemaining);
+        
+        if (newRemaining <= 0) {
+          clearInterval(timerRef.current as NodeJS.Timeout);
+          setIsRunning(false);
+          baseTimeRef.current = null;
+        }
+      }, 100);
     } else {
       clearInterval(timerRef.current as NodeJS.Timeout);
+      baseTimeRef.current = null;
     }
-    return () => clearInterval(timerRef.current as NodeJS.Timeout);
+    return () => {
+      clearInterval(timerRef.current as NodeJS.Timeout);
+    };
   }, [isRunning]);
 
   const formatTime = (seconds: number): string => {
@@ -258,6 +308,28 @@ export const GameView: React.FC = () => {
     }
   };
 
+  const handleTimeAdjustment = (seconds: number) => {
+    const newTime = Math.max(0, timeRemaining + seconds);
+    setTimeRemaining(newTime);
+    
+    if (isRunning) {
+      baseTimeRef.current = {
+        startTime: Date.now(),
+        initialRemaining: newTime
+      };
+    }
+    
+    // If the clock is running, we need to adjust the game's periodStartTime
+    if (isRunning && game) {
+      const updatedGame = {
+        ...game,
+        periodStartTime: Date.now() - ((game.periods[currentPeriod].length * 60) - newTime) * 1000
+      };
+      dbService.updateGame(updatedGame);
+      setGame(updatedGame);
+    }
+  };
+
   if (!game) return <div>Loading...</div>;
 
   return (
@@ -273,42 +345,42 @@ export const GameView: React.FC = () => {
               <Button 
                 variant="outline-secondary" 
                 size="sm"
-                onClick={() => setTimeRemaining(prev => prev - 1)}
+                onClick={() => handleTimeAdjustment(-1)}
               >
                 -1s
               </Button>
               <Button 
                 variant="outline-secondary" 
                 size="sm"
-                onClick={() => setTimeRemaining(prev => prev - 10)}
+                onClick={() => handleTimeAdjustment(-10)}
               >
                 -10s
               </Button>
               <Button 
                 variant="outline-secondary" 
                 size="sm"
-                onClick={() => setTimeRemaining(prev => prev - 30)}
+                onClick={() => handleTimeAdjustment(-30)}
               >
                 -30s
               </Button>
               <Button 
                 variant="outline-secondary" 
                 size="sm"
-                onClick={() => setTimeRemaining(prev => prev + 1)}
+                onClick={() => handleTimeAdjustment(1)}
               >
                 +1s
               </Button>
               <Button 
                 variant="outline-secondary" 
                 size="sm"
-                onClick={() => setTimeRemaining(prev => prev + 10)}
+                onClick={() => handleTimeAdjustment(10)}
               >
                 +10s
               </Button>
               <Button 
                 variant="outline-secondary" 
                 size="sm"
-                onClick={() => setTimeRemaining(prev => prev + 30)}
+                onClick={() => handleTimeAdjustment(30)}
               >
                 +30s
               </Button>

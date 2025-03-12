@@ -33,4 +33,10 @@ export interface Game {
   opponent: string;
   players: Player[];
   periods: Period[];
+  // Add new fields for state persistence
+  activePlayers: string[];
+  currentPeriod: number;
+  isRunning: boolean;
+  periodStartTime?: number; // timestamp when period was started
+  periodTimeElapsed?: number; // seconds elapsed when period was paused
 }
