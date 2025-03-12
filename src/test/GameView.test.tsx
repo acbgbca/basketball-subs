@@ -21,10 +21,16 @@ describe('Game Operations', () => {
     team: mockTeam,
     date: new Date(),
     periods: [
-      { id: '1', periodNumber: 1, length: 20, substitutions: [] }
+      { id: '1', periodNumber: 1, length: 20, substitutions: [] },
+      { id: '2', periodNumber: 2, length: 20, substitutions: [] }
     ],
     opponent: 'Opponent Team',
-    players: mockTeam.players
+    players: mockTeam.players,
+    activePlayers: [],
+    currentPeriod: 0,
+    isRunning: false,
+    periodStartTime: undefined,
+    periodTimeElapsed: undefined
   };
 
   beforeEach(() => {

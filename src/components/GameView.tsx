@@ -4,7 +4,6 @@ import { useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { Game, Substitution } from '../types';
 import { dbService } from '../services/db';
-import { time } from 'console';
 
 export const GameView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -51,16 +50,12 @@ export const GameView: React.FC = () => {
           const elapsedSeconds = Math.floor((Date.now() - gameData.periodStartTime) / 1000);
           const periodLength = gameData.periods[currentPeriod].length * 60;
           setTimeRemaining(Math.max(0, periodLength - elapsedSeconds));
-          console.log(elapsedSeconds);
         } else if (gameData.periodTimeElapsed) {
           const periodLength = gameData.periods[currentPeriod].length * 60;
           setTimeRemaining(Math.max(0, periodLength - gameData.periodTimeElapsed));
         } else {
           setTimeRemaining(gameData.periods[currentPeriod].length * 60);
         }
-        console.log(gameData);
-        console.log(gameData.periods[currentPeriod].length * 60);
-        console.log(timeRemaining);
       }
     };
     loadGame();
