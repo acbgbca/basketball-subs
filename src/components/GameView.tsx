@@ -169,6 +169,8 @@ export const GameView: React.FC = () => {
     if (currentPeriod < game.periods.length - 1) {
       setCurrentPeriod(prev => prev + 1);
       setTimeRemaining(game.periods[currentPeriod + 1].length * 60);
+    } else {
+      setTimeRemaining(0);
     }
     setActivePlayers(new Set());
     setShowEndPeriodModal(false);
