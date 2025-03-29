@@ -594,7 +594,6 @@ export const GameView: React.FC = () => {
                   <span>{player.name}</span>
                   <Button 
                     variant={subInPlayers.has(player.id) ? "secondary" : "success"} 
-                    size="sm" 
                     onClick={() => handleSubButtonClick(player.id, 'in')}
                     disabled={!subInPlayers.has(player.id) && ((activePlayers.size + subInPlayers.size - subOutPlayers.size) >= 5)}
                   >
