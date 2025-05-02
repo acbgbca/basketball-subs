@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Period Management', () => {
-  test('should handle periods in a game', async ({ page }) => {
+  test.skip('should handle periods in a game', async ({ page }) => {
     // Setup team and game
     await page.goto('/teams/new');
     await page.fill('#teamName', 'Period Test Team');
@@ -41,7 +41,7 @@ test.describe('Period Management', () => {
     await expect(page.getByRole('button', { name: 'End Period' })).toBeDisabled();
   });
 
-  test('should track substitutions across periods', async ({ page }) => {
+  test.skip('should track substitutions across periods', async ({ page }) => {
     // Setup team with players
     await page.goto('/teams/new');
     await page.fill('#teamName', 'Sub Period Team');

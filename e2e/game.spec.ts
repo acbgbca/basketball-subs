@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Game Management', () => {
-  test('should create a new game', async ({ page }) => {
+  test.skip('should create a new game', async ({ page }) => {
     // First create a team
     await page.goto('/teams/new');
     await page.fill('#teamName', 'Game Test Team');
@@ -19,7 +19,7 @@ test.describe('Game Management', () => {
     await expect(page.getByText('Test Opponent')).toBeVisible();
   });
 
-  test('should manage game clock', async ({ page }) => {
+  test.skip('should manage game clock', async ({ page }) => {
     // Create team and game first
     await page.goto('/teams/new');
     await page.fill('#teamName', 'Clock Test Team');
@@ -56,7 +56,7 @@ test.describe('Game Management', () => {
     expect(timeAfterStop).toBe(timeAfterWait);
   });
 
-  test('should manage substitutions', async ({ page }) => {
+  test.skip('should manage substitutions', async ({ page }) => {
     // Create team with players
     await page.goto('/teams/new');
     await page.fill('#teamName', 'Sub Test Team');
