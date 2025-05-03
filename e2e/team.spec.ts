@@ -1,40 +1,44 @@
 import { test, expect } from '@playwright/test';
 
-// Increase timeout for this test file
-test.describe.configure({ timeout: 60000 });
-
 test.describe('Team Management', () => {
-  test.skip('should create a new team', async ({ page }) => {
-    await page.goto('/teams/new');
+  test('should create a new team', async ({ page }) => {
+    await page.goto('/#/teams/new');
+    // Wait for navigation and form to be ready
+    await page.waitForURL('**/teams/new');
+    await page.waitForSelector('#teamName');
+    
     await page.fill('#teamName', 'Test Team');
-    await page.click('button[type="submit"]');
-    await expect(page).toHaveURL('/teams');
+    await page.getByRole('button', { name: 'Create Team' }).click();
+    await expect(page).toHaveURL('/#/teams');
     await expect(page.getByText('Test Team')).toBeVisible();
   });
 
-  test.skip('should view team details', async ({ page }) => {
+  test('should view team details', async ({ page }) => {
     // First create a team
     await page.goto('/teams/new');
+    await page.waitForSelector('#teamName');
     await page.fill('#teamName', 'View Test Team');
-    await page.click('button[type="submit"]');
+    await page.getByRole('button', { name: 'Create Team' }).click();
     
     // Then view its details
-    await page.getByText('View Test Team').click();
+    await page.getByRole('button', { name: 'View Team' }).click();
     await expect(page.getByRole('heading')).toContainText('View Test Team');
   });
 
-  test.skip('should add a player to team', async ({ page }) => {
+  test('should add a player to team', async ({ page }) => {
     // First create a team
     await page.goto('/teams/new');
+    await page.waitForSelector('#teamName');
     await page.fill('#teamName', 'Player Test Team');
-    await page.click('button[type="submit"]');
+    await page.getByRole('button', { name: 'Create Team' }).click();
     
     // Navigate to team view and add player
-    await page.getByText('Player Test Team').click();
-    await page.getByText('Add Player').click();
-    await page.fill('input[name="playerName"]', 'John Doe');
-    await page.fill('input[name="playerNumber"]', '23');
-    await page.click('button:has-text("Save")');
+    await page.getByRole('button', { name: 'View Team' }).click();
+    await page.getByRole('button', { name: 'Add Player' }).click();
+    await page.waitForSelector('#playerName');
+    await page.fill('#playerName', 'John Doe');
+    await page.fill('#playerNumber', '23');
+    await page.getByTestId('add-player-button').click();
     
     await expect(page.getByText('John Doe')).toBeVisible();
     await expect(page.getByText('23')).toBeVisible();
@@ -43,9 +47,6 @@ test.describe('Team Management', () => {
 
 // Add basic smoke test
 test('homepage should load', async ({ page }) => {
-  // Navigate to the homepage
   await page.goto('/', { waitUntil: 'networkidle' });
-  
-  // Wait for something specific on the page
-  await expect(page.locator('body')).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('body')).toBeVisible();
 });
