@@ -80,7 +80,7 @@ describe('Game Operations', () => {
     });
 
     let player1 = within(screen.getByTestId('substitution-modal')).getByText('Player 1');
-    userEvent.click(within(player1.closest('div')!).getByText('In'));
+    userEvent.click(player1);
     userEvent.click(screen.getByText('Done'));
 
     await waitFor(() => {

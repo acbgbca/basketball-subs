@@ -9,7 +9,8 @@
 			"extensions": [
 				"github.vscode-github-actions",
 				"mhutchie.git-graph",
-				"ms-playwright.playwright"
+				"ms-playwright.playwright",
+				"Orta.vscode-jest"
 			]
 		}
 	},
