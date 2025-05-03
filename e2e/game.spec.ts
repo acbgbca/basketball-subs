@@ -35,7 +35,7 @@ test.describe('Game Management', () => {
     await page.getByRole('button', { name: 'Create Game' }).click();
 
     // Go to game view
-    await page.getByRole('link', { name: 'Clock Test Team' }).click();
+    await page.getByTestId('view-game-Clock Test Team').click();
     await page.waitForURL(/\/#\/games\/.*$/, { timeout: 5000 });
     
     // Wait for game view to load and check clock
@@ -68,9 +68,10 @@ test.describe('Game Management', () => {
     await page.waitForSelector('#teamName', { timeout: 5000 });
     await page.fill('#teamName', 'Sub Test Team');
     await page.getByRole('button', { name: 'Create Team' }).click();
+    await expect(page).toHaveURL('/#/teams');
     
     // Add players
-    await page.getByRole('link', { name: 'Sub Test Team' }).click();
+    await page.getByTestId('view-team-Sub Test Team').click();
     await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
     
     // Explicitly wait for the Add Player button and use first() to handle multiple matches
@@ -101,7 +102,7 @@ test.describe('Game Management', () => {
     await page.getByRole('button', { name: 'Create Game' }).click();
 
     // Go to game view
-    await page.getByRole('link', { name: 'Sub Test Team' }).click();
+    await page.getByTestId('view-game-Sub Test Team').click();
     await page.waitForURL(/\/#\/games\/.*$/, { timeout: 5000 });
 
     // Wait for game view to load
@@ -109,7 +110,7 @@ test.describe('Game Management', () => {
 
     // Sub in Player One
     await page.getByRole('button', { name: 'Sub' }).click();
-    await page.getByText('Player One').click();
+    await page.getByTestId('substitution-modal').getByText('Player One').click();
     await page.getByRole('button', { name: 'Done' }).click();
 
     // Verify player is on court
@@ -117,7 +118,7 @@ test.describe('Game Management', () => {
 
     // Sub out Player One
     await page.getByRole('button', { name: 'Sub' }).click();
-    await page.getByText('Player One').click();
+    await page.getByTestId('substitution-modal').getByText('Player One').click();
     await page.getByRole('button', { name: 'Done' }).click();
 
     // Verify player is on bench

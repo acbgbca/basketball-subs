@@ -574,32 +574,35 @@ export const GameView: React.FC = () => {
               {Array.from(activePlayers).map(playerId => {
                 const player = game.players.find(p => p.id === playerId);
                 return player ? (
-                  <div key={player.id} className="d-flex justify-content-between align-items-center mb-2">
+                  <Button
+                    key={player.id}
+                    variant="outline-light"
+                    className="d-flex justify-content-between align-items-center mb-2 w-100 text-dark"
+                    onClick={() => handleSubButtonClick(player.id, 'out')}
+                  >
                     <span>{player.name}</span>
-                    <Button 
-                      variant={subOutPlayers.has(player.id) ? "secondary" : "danger"} 
-                      size="sm" 
-                      onClick={() => handleSubButtonClick(player.id, 'out')}
-                    >
+                    <span className={`badge ${subOutPlayers.has(player.id) ? "bg-secondary" : "bg-danger"}`}>
                       {subOutPlayers.has(player.id) ? "Cancel Out" : "Out"}
-                    </Button>
-                  </div>
+                    </span>
+                  </Button>
                 ) : null;
               })}
             </Col>
             <Col>
               <h5>On Bench</h5>
               {game.players.filter(p => !activePlayers.has(p.id)).map(player => (
-                <div key={player.id} className="d-flex justify-content-between align-items-center mb-2">
+                <Button
+                  key={player.id}
+                  variant="outline-light"
+                  className="d-flex justify-content-between align-items-center mb-2 w-100 text-dark"
+                  onClick={() => handleSubButtonClick(player.id, 'in')}
+                  disabled={!subInPlayers.has(player.id) && ((activePlayers.size + subInPlayers.size - subOutPlayers.size) >= 5)}
+                >
                   <span>{player.name}</span>
-                  <Button 
-                    variant={subInPlayers.has(player.id) ? "secondary" : "success"} 
-                    onClick={() => handleSubButtonClick(player.id, 'in')}
-                    disabled={!subInPlayers.has(player.id) && ((activePlayers.size + subInPlayers.size - subOutPlayers.size) >= 5)}
-                  >
+                  <span className={`badge ${subInPlayers.has(player.id) ? "bg-secondary" : "bg-success"}`}>
                     {subInPlayers.has(player.id) ? "Cancel In" : "In"}
-                  </Button>
-                </div>
+                  </span>
+                </Button>
               ))}
             </Col>
           </Row>

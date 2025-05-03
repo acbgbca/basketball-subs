@@ -61,6 +61,7 @@ export const GameList: React.FC = () => {
                   <Link to={`/games/${game.id}`}>
                     <Button 
                       variant="outline-primary"
+                      data-testid={"view-game-" + game.team.name}
                     >
                       View Game
                     </Button>

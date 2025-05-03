@@ -54,7 +54,7 @@ export const TeamList: React.FC = () => {
                 <Card.Text>Players: {team.players.length}</Card.Text>
                 <div className="d-flex gap-2">
                   <Link to={`/teams/${team.id}`}>
-                    <Button variant="outline-primary">
+                    <Button variant="outline-primary" data-testid={"view-team-" + team.name}>
                       View Team
                     </Button>
                   </Link>
