@@ -4,9 +4,14 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: [['html', { open: 'never' }]],  // Prevent auto-opening the report
+  reporter: process.env.CI ? [
+    ['html'],
+    ['json', { outputFile: 'playwright-report/results.json' }]
+  ] : [
+    ['html', { open: 'never' }]
+  ],
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'retain-on-failure', // Save trace on test failure
@@ -26,9 +31,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'BROWSER=none npm run start',
+    command: 'npm run start',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 30000, // 30 second timeout for server startup
+    timeout: 120000, // 2 minute timeout for server startup
   },
 });
