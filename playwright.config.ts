@@ -23,7 +23,6 @@ export default defineConfig({
     command: 'npm run start',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 120000, // 2 minute timeout for server startup
+    timeout: 30000, // 2 minute timeout for server startup
   },
-  timeout: 60000, // Global timeout of 1 minute
 });

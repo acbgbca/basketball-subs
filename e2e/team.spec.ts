@@ -4,7 +4,6 @@ test.describe('Team Management', () => {
   test('should create a new team', async ({ page }) => {
     await page.goto('/#/teams/new');
     // Wait for navigation and form to be ready
-    await page.waitForURL('**/teams/new');
     await page.waitForSelector('#teamName');
     
     await page.fill('#teamName', 'Test Team');
@@ -15,10 +14,11 @@ test.describe('Team Management', () => {
 
   test('should view team details', async ({ page }) => {
     // First create a team
-    await page.goto('/teams/new');
+    await page.goto('/#/teams/new');
     await page.waitForSelector('#teamName');
     await page.fill('#teamName', 'View Test Team');
     await page.getByRole('button', { name: 'Create Team' }).click();
+    await expect(page).toHaveURL('/#/teams');
     
     // Then view its details
     await page.getByRole('button', { name: 'View Team' }).click();
@@ -27,10 +27,11 @@ test.describe('Team Management', () => {
 
   test('should add a player to team', async ({ page }) => {
     // First create a team
-    await page.goto('/teams/new');
+    await page.goto('/#/teams/new');
     await page.waitForSelector('#teamName');
     await page.fill('#teamName', 'Player Test Team');
     await page.getByRole('button', { name: 'Create Team' }).click();
+    await expect(page).toHaveURL('/#/teams');
     
     // Navigate to team view and add player
     await page.getByRole('button', { name: 'View Team' }).click();
