@@ -27,6 +27,7 @@ test.describe('Game Management', () => {
     await page.waitForSelector('#teamName', { timeout: 5000 });
     await page.fill('#teamName', 'Clock Test Team');
     await page.getByRole('button', { name: 'Create Team' }).click();
+    await expect(page).toHaveURL('/#/teams');
 
     await page.goto('/#/games/new');
     await page.waitForSelector('[data-testid="team-select"]', { timeout: 5000 });
