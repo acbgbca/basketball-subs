@@ -2,26 +2,26 @@ name: Pull Requests
 permissions:
   contents: read
   pull-requests: write
+  checks: write # Required for test reporting
 
 on:
   pull_request:
     branches: [ main ]
 
+env:
+  NODE_VERSION: '22.x'
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [20.x, 22.x]
-
     steps:
     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
     
-    - name: Use Node.js ${{ matrix.node-version }}
+    - name: Use Node.js ${{ env.NODE_VERSION }}
       uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
         
     - name: Install dependencies
@@ -30,7 +30,14 @@ jobs:
     - name: Build
       run: npm run build
       
-    - name: Run tests
-      run: npm test
+    - name: Run Jest tests
+      run: npm test -- --watchAll=false --ci --json --outputFile=jest-results.json
       env:
-        CI: true 
+        CI: true
+
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps
+      
+    - name: Run Playwright tests
+      run: npx playwright test
+      

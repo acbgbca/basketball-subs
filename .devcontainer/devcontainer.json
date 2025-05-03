@@ -8,10 +8,12 @@
 		"vscode": {
 			"extensions": [
 				"github.vscode-github-actions",
-				"mhutchie.git-graph"
+				"mhutchie.git-graph",
+				"ms-playwright.playwright",
+				"Orta.vscode-jest"
 			]
 		}
-	}
+	},
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
@@ -20,7 +22,7 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "yarn install",
+	"postCreateCommand": "npx playwright install --with-deps"
 
 	// Configure tool-specific properties.
 	// "customizations": {},
