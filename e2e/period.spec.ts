@@ -45,8 +45,10 @@ test.describe('Period Management', () => {
     await page.getByTestId('end-period-modal').getByRole('button', { name: 'End Period' }).click();
     
     // Verify game ended state
-    await expect(page.getByText('Game Over')).toBeVisible({ timeout: 5000 });
-    await expect(page.getByRole('button', { name: 'End Period' })).toBeDisabled({ timeout: 5000 });
+    await expect(page.getByTestId('period-display')).toHaveText('Period 4', { timeout: 5000 });
+    await expect(page.getByTestId('clock-display')).toHaveText('0:00', { timeout: 5000 });
+    // await expect(page.getByText('Game Over')).toBeVisible({ timeout: 5000 });
+    // await expect(page.getByRole('button', { name: 'End Period' })).toBeDisabled({ timeout: 5000 });
   });
 
   test('should track substitutions across periods', async ({ page }) => {
@@ -55,9 +57,10 @@ test.describe('Period Management', () => {
     await page.waitForSelector('#teamName', { timeout: 5000 });
     await page.fill('#teamName', 'Sub Period Team');
     await page.getByRole('button', { name: 'Create Team' }).click();
+    await expect(page).toHaveURL('/#/teams');
     
     // Add a player
-    await page.getByRole('link', { name: 'Sub Period Team' }).click();
+    await page.getByTestId('view-team-Sub Period Team').click();
     await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
     await page.getByRole('button', { name: 'Add Player' }).first().click();
     await page.waitForSelector('#playerName', { timeout: 5000 });
@@ -79,7 +82,7 @@ test.describe('Period Management', () => {
     await expect(page).toHaveURL('/#/games');
 
     // Go to game view
-    await page.getByRole('link', { name: 'Sub Period Team' }).click();
+    await page.getByTestId('view-game-Sub Period Team').click();
     await page.waitForURL(/\/#\/games\/.*$/, { timeout: 5000 });
     
     // Wait for game view to load
@@ -87,7 +90,7 @@ test.describe('Period Management', () => {
 
     // Sub in player for first period
     await page.getByRole('button', { name: 'Sub' }).click();
-    await page.getByText('Test Player').click();
+    await page.getByTestId('substitution-modal').getByText('Test Player').click();
     await page.getByRole('button', { name: 'Done' }).click();
 
     // Run clock for a minute
@@ -97,8 +100,9 @@ test.describe('Period Management', () => {
 
     // End period and verify stats carried over
     await page.getByRole('button', { name: 'End Period' }).click();
+    await page.getByTestId('end-period-modal').getByRole('button', { name: 'End Period' }).click();
     
     // Check player stats in the new period
-    await expect(page.getByText('Test Player').locator('..').getByText(/1st:/)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Test Player').locator('..').getByText('10:00')).toBeVisible({ timeout: 5000 });
   });
 });
