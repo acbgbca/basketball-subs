@@ -340,7 +340,7 @@ export const GameView: React.FC = () => {
         <Col>
           <h2>{game.team.name}</h2>
           <h4 className="text-muted">vs {game.opponent}</h4>
-          <h3>Period {currentPeriod + 1}</h3>
+          <h3 data-testid="period-display">Period {currentPeriod + 1}</h3>
           <div className="clock-display">
             <h1 data-testid="clock-display" data-seconds={timeRemaining}>{formatTime(timeRemaining)}</h1>
             <div className="d-flex gap-2 mb-3">
@@ -544,7 +544,7 @@ export const GameView: React.FC = () => {
       </Modal>
 
       {/* End Period Confirmation Modal */}
-      <Modal show={showEndPeriodModal} onHide={() => setShowEndPeriodModal(false)}>
+      <Modal show={showEndPeriodModal} onHide={() => setShowEndPeriodModal(false)} data-testid="end-period-modal">
         <Modal.Header closeButton>
           <Modal.Title>End Period Confirmation</Modal.Title>
         </Modal.Header>

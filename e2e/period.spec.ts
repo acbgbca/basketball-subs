@@ -19,29 +19,30 @@ test.describe('Period Management', () => {
     await expect(page).toHaveURL('/#/games');
 
     // Go to game view
-    await page.getByRole('link', { name: 'Period Test Team' }).click();
+    await page.getByTestId('view-game-Period Test Team').click();
     await page.waitForURL(/\/#\/games\/.*$/, { timeout: 5000 });
     
-    // Wait for game view to load
-    await page.waitForSelector('[data-testid="period-display"]', { timeout: 5000 });
-
     // Check initial period state
     await expect(page.getByTestId('period-display')).toHaveText('Period 1', { timeout: 5000 });
     await expect(page.getByTestId('clock-display')).toHaveText('10:00', { timeout: 5000 });
 
     // End period
     await page.getByRole('button', { name: 'End Period' }).click();
+    await page.getByTestId('end-period-modal').getByRole('button', { name: 'End Period' }).click();
     
     // Verify next period started
     await expect(page.getByTestId('period-display')).toHaveText('Period 2', { timeout: 5000 });
     await expect(page.getByTestId('clock-display')).toHaveText('10:00', { timeout: 5000 });
 
     // Fast forward to last period
-    await page.getByRole('button', { name: 'End Period' }).click();
-    await page.getByRole('button', { name: 'End Period' }).click();
+    await page.locator('.clock-display').getByRole('button', { name: 'End Period' }).click();
+    await page.getByTestId('end-period-modal').getByRole('button', { name: 'End Period' }).click();
+    await page.locator('.clock-display').getByRole('button', { name: 'End Period' }).click();
+    await page.getByTestId('end-period-modal').getByRole('button', { name: 'End Period' }).click();
     
     // End last period
-    await page.getByRole('button', { name: 'End Period' }).click();
+    await page.locator('.clock-display').getByRole('button', { name: 'End Period' }).click();
+    await page.getByTestId('end-period-modal').getByRole('button', { name: 'End Period' }).click();
     
     // Verify game ended state
     await expect(page.getByText('Game Over')).toBeVisible({ timeout: 5000 });

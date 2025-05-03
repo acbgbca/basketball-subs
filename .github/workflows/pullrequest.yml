@@ -41,28 +41,3 @@ jobs:
     - name: Run Playwright tests
       run: npx playwright test
       
-    # - name: Upload Playwright test results
-    #   if: always()
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: playwright-report-${{ matrix.node-version }}
-    #     path: playwright-report/
-    #     retention-days: 30
-
-    # - name: Upload Playwright test results to PR
-    #   if: always()
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: playwright-report
-    #     path: |
-    #       playwright-report/
-    #       test-results/
-    #     retention-days: 30
-
-    - name: Upload test results to PR
-      if: always()
-      uses: dorny/test-reporter@v2
-      with:
-        name: JestTest Results
-        path: "jest-results.json"
-        reporter: mocha-json
