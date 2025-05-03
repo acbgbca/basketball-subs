@@ -31,7 +31,7 @@ jobs:
       run: npm run build
       
     - name: Run Jest tests
-      run: npm test -- --watchAll=false --ci --xml --outputFile=jest-results.xml
+      run: npm test -- --watchAll=false --ci --json --outputFile=jest-results.json
       env:
         CI: true
 
@@ -63,6 +63,6 @@ jobs:
       if: always()
       uses: dorny/test-reporter@v2
       with:
-        name: Jest Test Results
-        path: "jest-results.xml"
-        reporter: jest-junit
+        name: JestTest Results
+        path: "jest-results.json"
+        reporter: mocha-json
