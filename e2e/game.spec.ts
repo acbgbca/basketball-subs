@@ -125,4 +125,67 @@ test.describe('Game Management', () => {
     // Verify player is on bench
     await expect(page.getByText('Player One').locator('..').getByText('Bench')).toBeVisible({ timeout: 5000 });
   });
+
+  test('should enforce maximum of 5 players on court', async ({ page }) => {
+    // Create team with 7 players
+    await page.goto('/#/teams/new');
+    await page.waitForSelector('#teamName', { timeout: 5000 });
+    await page.fill('#teamName', 'Max Players Team');
+    await page.getByRole('button', { name: 'Create Team' }).click();
+    await expect(page).toHaveURL('/#/teams');
+    
+    // Add players
+    await page.getByTestId('view-team-Max Players Team').click();
+    await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
+    
+    // Add 7 players
+    for (let i = 1; i <= 7; i++) {
+      await page.getByRole('button', { name: 'Add Player' }).first().click();
+      await page.waitForSelector('#playerName', { timeout: 5000 });
+      await page.fill('#playerName', `Max Player ${i}`);
+      await page.fill('#playerNumber', i.toString());
+      await page.getByTestId('add-player-button').click();
+      // Wait for the player to be added before continuing
+      await expect(page.getByText(`Max Player ${i}`)).toBeVisible({ timeout: 5000 });
+    }
+
+    // Create game
+    await page.goto('/#/games/new');
+    await page.waitForSelector('[data-testid="team-select"]', { timeout: 5000 });
+    await page.selectOption('[data-testid="team-select"]', { label: 'Max Players Team' });
+    await page.fill('#opponent', 'Max Players Opponent');
+    
+    // Select all players for the game
+    for (let i = 1; i <= 7; i++) {
+      await page.getByLabel(`${i} - Max Player ${i}`).check();
+    }
+    
+    await page.getByRole('button', { name: 'Create Game' }).click();
+
+    // Go to game view
+    await page.getByTestId('view-game-Max Players Team').click();
+    await page.waitForURL(/\/#\/games\/.*$/, { timeout: 5000 });
+
+    // Wait for game view to load
+    await page.waitForSelector('[data-testid="clock-display"]', { timeout: 5000 });
+
+    // Open sub modal
+    await page.getByRole('button', { name: 'Sub' }).click();
+
+    // Select 6 players
+    for (let i = 1; i <= 6; i++) {
+      await page.getByRole('button', { name: `Max Player ${i} In` }).click();
+    }
+
+    // Verify warning is shown and done button is disabled
+    await expect(page.getByTestId('too-many-players-warning')).toBeVisible();
+    await expect(page.getByTestId('sub-modal-done')).toBeDisabled();
+
+    // Deselect one player
+    await page.getByRole('button', { name: 'Max Player 6 Cancel In' }).click();
+
+    // Verify warning is gone and done button is enabled
+    await expect(page.getByTestId('too-many-players-warning')).not.toBeVisible();
+    await expect(page.getByTestId('sub-modal-done')).toBeEnabled();
+  });
 });
