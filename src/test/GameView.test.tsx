@@ -266,7 +266,7 @@ describe('Game Operations', () => {
     });
 
     // Add first foul
-    userEvent.click(within(screen.getByTestId('foul-modal')).getByText('Player 1'));
+    userEvent.click(within(screen.getByTestId('foul-modal')).getByText('1 - Player 1'));
     userEvent.click(within(screen.getByTestId('foul-modal')).getByText('Done'));
 
     await waitFor(() => {
@@ -287,7 +287,7 @@ describe('Game Operations', () => {
 
     // Add another foul
     userEvent.click(screen.getByText('Foul'));
-    userEvent.click(within(screen.getByTestId('foul-modal')).getByText('Player 1'));
+    userEvent.click(within(screen.getByTestId('foul-modal')).getByText('1 - Player 1'));
     userEvent.click(screen.getByText('Done'));
 
     // Verify fouls are displayed
