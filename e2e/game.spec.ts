@@ -236,13 +236,7 @@ test.describe('Game Management', () => {
     // Now record the foul for player on court
     await page.getByRole('button', { name: 'Foul' }).first().click();
     await page.getByTestId('foul-modal').getByText('Foul Player').click();
-
-    // Verify confirmation screen is shown
-    await expect(page.getByText('Are you sure you want to record a foul for:')).toBeVisible();
-    await expect(page.getByText('Current fouls: 0')).toBeVisible();
-
-    // Confirm foul
-    await page.getByRole('button', { name: 'Confirm Foul' }).click();
+    await page.getByRole('button', { name: 'Done' }).click();
 
     // Verify foul count is updated
     await expect(page.getByTestId('player-1').locator('td').nth(3)).toHaveText('1');
@@ -251,8 +245,7 @@ test.describe('Game Management', () => {
     // Record second foul
     await page.getByRole('button', { name: 'Foul' }).first().click();
     await page.getByTestId('foul-modal').getByText('Foul Player').click();
-    await expect(page.getByText('Current fouls: 1')).toBeVisible();
-    await page.getByRole('button', { name: 'Confirm Foul' }).click();
+    await page.getByRole('button', { name: 'Done' }).click();
 
     // Verify foul counts are updated
     await expect(page.getByTestId('player-1').locator('td').nth(3)).toHaveText('2');
