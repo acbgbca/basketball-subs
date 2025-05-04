@@ -16,6 +16,7 @@ export const GameView: React.FC = () => {
   const [showEditSubModal, setShowEditSubModal] = useState(false);
   const [selectedSub, setSelectedSub] = useState<Substitution | null>(null);
   const [showFoulModal, setShowFoulModal] = useState(false);
+  const [selectedFoulPlayerId, setSelectedFoulPlayerId] = useState<string | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const justAdjustedRef = useRef(false); // Add this new ref
   const baseTimeRef = useRef<{startTime: number; initialRemaining: number} | null>(null);
@@ -35,8 +36,6 @@ export const GameView: React.FC = () => {
   const [showSubModal, setShowSubModal] = useState(false);
   const [subInPlayers, setSubInPlayers] = useState<Set<string>>(new Set());
   const [subOutPlayers, setSubOutPlayers] = useState<Set<string>>(new Set());
-
-  const [selectedFoulPlayer, setSelectedFoulPlayer] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     const loadGame = async () => {
@@ -350,14 +349,14 @@ export const GameView: React.FC = () => {
   const handleFoulPlayerClick = (playerId: string) => {
     const player = game?.players.find(p => p.id === playerId);
     if (player) {
-      setSelectedFoulPlayer({ id: player.id, name: player.name });
+      setSelectedFoulPlayerId(player.id);
     }
   };
 
   const handleFoulConfirm = async () => {
-    if (!game || !selectedFoulPlayer) return;
+    if (!game || !selectedFoulPlayerId) return;
     
-    const player = game.players.find(p => p.id === selectedFoulPlayer.id);
+    const player = game.players.find(p => p.id === selectedFoulPlayerId);
     if (!player) return;
 
     const newFoul: Foul = {
@@ -377,12 +376,12 @@ export const GameView: React.FC = () => {
     await dbService.updateGame(updatedGame);
     setGame(updatedGame);
     setShowFoulModal(false);
-    setSelectedFoulPlayer(null);
+    setSelectedFoulPlayerId(null);
   };
 
   const handleFoulModalClose = () => {
     setShowFoulModal(false);
-    setSelectedFoulPlayer(null);
+    setSelectedFoulPlayerId(null);
   };
 
   if (!game) return <div>Loading...</div>;
@@ -695,54 +694,40 @@ export const GameView: React.FC = () => {
       {/* Foul Modal */}
       <Modal show={showFoulModal} onHide={handleFoulModalClose} data-testid="foul-modal">
         <Modal.Header closeButton>
-          <Modal.Title>{selectedFoulPlayer ? 'Confirm Foul' : 'Record Foul'}</Modal.Title>
+          <Modal.Title>Record Foul</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {!selectedFoulPlayer ? (
-            <>
-              <h5>Select Player</h5>
-              {game.players
-                .filter(player => activePlayers.has(player.id))
-                .map(player => (
-                  <Button
-                    key={player.id}
-                    variant="outline-light"
-                    className="d-flex justify-content-between align-items-center mb-2 w-100 text-dark"
-                    onClick={() => handleFoulPlayerClick(player.id)}
-                  >
-                    <span>{player.name}</span>
-                    <Badge bg="danger">{calculatePlayerFouls(player.id)} fouls</Badge>
-                  </Button>
-                ))}
-              {Array.from(activePlayers).length === 0 && (
-                <Alert variant="warning">
-                  No players are currently on the court. Sub in players to record fouls.
-                </Alert>
-              )}
-            </>
-          ) : (
-            <div className="text-center">
-              <h5>Are you sure you want to record a foul for:</h5>
-              <h4 className="mb-3">{selectedFoulPlayer.name}</h4>
-              <p>Current fouls: {calculatePlayerFouls(selectedFoulPlayer.id)}</p>
-            </div>
+          <h5>Select Player</h5>
+          {game.players
+            .filter(player => activePlayers.has(player.id))
+            .map(player => (
+              <Button
+                key={player.id}
+                variant={selectedFoulPlayerId === player.id ? "primary" : "outline-light"}
+                className="d-flex justify-content-between align-items-center mb-2 w-100 text-dark"
+                onClick={() => handleFoulPlayerClick(player.id)}
+              >
+                <span>{player.name}</span>
+                <Badge bg="danger">{calculatePlayerFouls(player.id)} fouls</Badge>
+              </Button>
+            ))}
+          {Array.from(activePlayers).length === 0 && (
+            <Alert variant="warning">
+              No players are currently on the court. Sub in players to record fouls.
+            </Alert>
           )}
         </Modal.Body>
         <Modal.Footer>
-          {selectedFoulPlayer ? (
-            <>
-              <Button variant="secondary" onClick={() => setSelectedFoulPlayer(null)}>
-                Back
-              </Button>
-              <Button variant="danger" onClick={handleFoulConfirm}>
-                Confirm Foul
-              </Button>
-            </>
-          ) : (
-            <Button variant="secondary" onClick={handleFoulModalClose}>
-              Cancel
-            </Button>
-          )}
+          <Button variant="secondary" onClick={handleFoulModalClose}>
+            Cancel
+          </Button>
+          <Button 
+            variant="danger" 
+            onClick={handleFoulConfirm}
+            disabled={!selectedFoulPlayerId}
+          >
+            Done
+          </Button>
         </Modal.Footer>
       </Modal>
     </Container>

@@ -247,7 +247,6 @@ describe('Game Operations', () => {
     // First try to record a foul - should see warning
     userEvent.click(screen.getByText('Foul'));
     await waitFor(() => {
-      
       expect(screen.getByTestId('foul-modal').getElementsByClassName('alert')[0]).toBeInTheDocument();
     });
     userEvent.click(screen.getByText('Cancel'));
@@ -268,11 +267,7 @@ describe('Game Operations', () => {
 
     // Add first foul
     userEvent.click(within(screen.getByTestId('foul-modal')).getByText('Player 1'));
-    await waitFor(() => {
-      expect(screen.getByText('Are you sure you want to record a foul for:')).toBeInTheDocument();
-      expect(screen.getByText('Current fouls: 0')).toBeInTheDocument();
-    });
-    userEvent.click(screen.getByRole('button', { name: 'Confirm Foul' }));
+    userEvent.click(within(screen.getByTestId('foul-modal')).getByText('Done'));
 
     await waitFor(() => {
       expect(mockUpdateGame).toHaveBeenCalledWith(
@@ -293,10 +288,7 @@ describe('Game Operations', () => {
     // Add another foul
     userEvent.click(screen.getByText('Foul'));
     userEvent.click(within(screen.getByTestId('foul-modal')).getByText('Player 1'));
-    await waitFor(() => {
-      expect(screen.getByText('Current fouls: 1')).toBeInTheDocument();
-    });
-    userEvent.click(screen.getByRole('button', { name: 'Confirm Foul' }));
+    userEvent.click(screen.getByText('Done'));
 
     // Verify fouls are displayed
     await waitFor(() => {
