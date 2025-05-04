@@ -488,7 +488,18 @@ export const GameView: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {game.players.map(player => (
+              {game.players
+                .sort((a, b) => {
+                  // First sort by court status
+                  const aOnCourt = activePlayers.has(a.id);
+                  const bOnCourt = activePlayers.has(b.id);
+                  if (aOnCourt !== bOnCourt) {
+                    return bOnCourt ? 1 : -1;
+                  }
+                  // Then sort by name
+                  return a.name.localeCompare(b.name);
+                })
+                .map(player => (
                 <tr key={player.id} data-testid={`player-${player.number}`}>
                   <td>{player.number}</td>
                   <td>{player.name}</td>
@@ -700,6 +711,7 @@ export const GameView: React.FC = () => {
           <h5>Select Player</h5>
           {game.players
             .filter(player => activePlayers.has(player.id))
+            .sort((a, b) => parseInt(a.number) - parseInt(b.number))
             .map(player => (
               <Button
                 key={player.id}
@@ -707,7 +719,7 @@ export const GameView: React.FC = () => {
                 className="d-flex justify-content-between align-items-center mb-2 w-100 text-dark"
                 onClick={() => handleFoulPlayerClick(player.id)}
               >
-                <span>{player.name}</span>
+                <span>{player.number} - {player.name}</span>
                 <Badge bg="danger">{calculatePlayerFouls(player.id)} fouls</Badge>
               </Button>
             ))}
