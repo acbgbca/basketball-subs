@@ -10,6 +10,14 @@ export interface Team {
   players: Player[];
 }
 
+// Add new Foul interface
+export interface Foul {
+  id: string;
+  player: Player;
+  periodId: string;  // to track which period the foul occurred in
+  timeRemaining: number;  // seconds remaining when foul occurred
+}
+
 export interface Substitution {
   id: string;
   player: Player;
@@ -24,6 +32,7 @@ export interface Period {
   periodNumber: number;
   length: 10 | 20;
   substitutions: Substitution[];
+  fouls: Foul[];  // Add fouls array to Period
 }
 
 export interface Game {

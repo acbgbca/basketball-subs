@@ -90,7 +90,8 @@ export const GameForm: React.FC = () => {
       id: uuidv4(),
       periodNumber: index + 1,
       length: periodLength,
-      substitutions: []
+      substitutions: [],
+      fouls: []  // Initialize fouls array
     }));
 
     const selectedTeamPlayers = selectedTeam.players.filter(player => selectedPlayers.has(player.id));

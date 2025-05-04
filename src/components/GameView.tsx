@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Container, Row, Col, Button, Table, Badge, Modal, Form, Alert } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
-import { Game, Substitution } from '../types';
+import { Game, Substitution, Foul } from '../types';
 import { dbService } from '../services/db';
 
 export const GameView: React.FC = () => {
@@ -15,6 +15,7 @@ export const GameView: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [showEditSubModal, setShowEditSubModal] = useState(false);
   const [selectedSub, setSelectedSub] = useState<Substitution | null>(null);
+  const [showFoulModal, setShowFoulModal] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const justAdjustedRef = useRef(false); // Add this new ref
   const baseTimeRef = useRef<{startTime: number; initialRemaining: number} | null>(null);
@@ -34,6 +35,8 @@ export const GameView: React.FC = () => {
   const [showSubModal, setShowSubModal] = useState(false);
   const [subInPlayers, setSubInPlayers] = useState<Set<string>>(new Set());
   const [subOutPlayers, setSubOutPlayers] = useState<Set<string>>(new Set());
+
+  const [selectedFoulPlayer, setSelectedFoulPlayer] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     const loadGame = async () => {
@@ -131,6 +134,18 @@ export const GameView: React.FC = () => {
         subTotal + (sub.secondsPlayed || 0), 0
       );
     }, 0);
+  };
+
+  const calculatePlayerFouls = (playerId: string): number => {
+    if (!game) return 0;
+    return game.periods.reduce((total, period) => {
+      return total + period.fouls.filter(foul => foul.player.id === playerId).length;
+    }, 0);
+  };
+
+  const calculatePeriodFouls = (): number => {
+    if (!game) return 0;
+    return game.periods[currentPeriod].fouls?.length || 0;
   };
 
   const handleEndPeriod = async () => {
@@ -332,6 +347,44 @@ export const GameView: React.FC = () => {
     }
   };
 
+  const handleFoulPlayerClick = (playerId: string) => {
+    const player = game?.players.find(p => p.id === playerId);
+    if (player) {
+      setSelectedFoulPlayer({ id: player.id, name: player.name });
+    }
+  };
+
+  const handleFoulConfirm = async () => {
+    if (!game || !selectedFoulPlayer) return;
+    
+    const player = game.players.find(p => p.id === selectedFoulPlayer.id);
+    if (!player) return;
+
+    const newFoul: Foul = {
+      id: uuidv4(),
+      player,
+      periodId: game.periods[currentPeriod].id,
+      timeRemaining
+    };
+
+    const updatedPeriods = [...game.periods];
+    if (!updatedPeriods[currentPeriod].fouls) {
+      updatedPeriods[currentPeriod].fouls = [];
+    }
+    updatedPeriods[currentPeriod].fouls.push(newFoul);
+
+    const updatedGame = { ...game, periods: updatedPeriods };
+    await dbService.updateGame(updatedGame);
+    setGame(updatedGame);
+    setShowFoulModal(false);
+    setSelectedFoulPlayer(null);
+  };
+
+  const handleFoulModalClose = () => {
+    setShowFoulModal(false);
+    setSelectedFoulPlayer(null);
+  };
+
   if (!game) return <div>Loading...</div>;
 
   return (
@@ -340,7 +393,12 @@ export const GameView: React.FC = () => {
         <Col>
           <h2>{game.team.name}</h2>
           <h4 className="text-muted">vs {game.opponent}</h4>
-          <h3 data-testid="period-display">Period {currentPeriod + 1}</h3>
+          <div className="d-flex align-items-center">
+            <h3 className="mb-0 me-2" data-testid="period-display">Period {currentPeriod + 1}</h3>
+            <Badge bg="danger" data-testid="period-fouls">
+              {calculatePeriodFouls()} fouls
+            </Badge>
+          </div>
           <div className="clock-display">
             <h1 data-testid="clock-display" data-seconds={timeRemaining}>{formatTime(timeRemaining)}</h1>
             <div className="d-flex gap-2 mb-3">
@@ -406,6 +464,12 @@ export const GameView: React.FC = () => {
               >
                 Sub
               </Button>
+              <Button
+                variant="danger"
+                onClick={() => setShowFoulModal(true)}
+              >
+                Foul
+              </Button>
             </div>
           </div>
         </Col>
@@ -420,15 +484,17 @@ export const GameView: React.FC = () => {
                 <th>#</th>
                 <th>Name</th>
                 <th>Played</th>
+                <th>Fouls</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {game.players.map(player => (
-                <tr key={player.id} data-testid={`player-${player.id}`}>
+                <tr key={player.id} data-testid={`player-${player.number}`}>
                   <td>{player.number}</td>
                   <td>{player.name}</td>
                   <td>{formatTime(calculatePlayerMinutes(player.id))}</td>
+                  <td>{calculatePlayerFouls(player.id)}</td>
                   <td>
                     <Badge bg={activePlayers.has(player.id) ? "success" : "secondary"}>
                       {activePlayers.has(player.id) ? "Court" : "Bench"}
@@ -623,6 +689,60 @@ export const GameView: React.FC = () => {
           >
             Done
           </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Foul Modal */}
+      <Modal show={showFoulModal} onHide={handleFoulModalClose} data-testid="foul-modal">
+        <Modal.Header closeButton>
+          <Modal.Title>{selectedFoulPlayer ? 'Confirm Foul' : 'Record Foul'}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {!selectedFoulPlayer ? (
+            <>
+              <h5>Select Player</h5>
+              {game.players
+                .filter(player => activePlayers.has(player.id))
+                .map(player => (
+                  <Button
+                    key={player.id}
+                    variant="outline-light"
+                    className="d-flex justify-content-between align-items-center mb-2 w-100 text-dark"
+                    onClick={() => handleFoulPlayerClick(player.id)}
+                  >
+                    <span>{player.name}</span>
+                    <Badge bg="danger">{calculatePlayerFouls(player.id)} fouls</Badge>
+                  </Button>
+                ))}
+              {Array.from(activePlayers).length === 0 && (
+                <Alert variant="warning">
+                  No players are currently on the court. Sub in players to record fouls.
+                </Alert>
+              )}
+            </>
+          ) : (
+            <div className="text-center">
+              <h5>Are you sure you want to record a foul for:</h5>
+              <h4 className="mb-3">{selectedFoulPlayer.name}</h4>
+              <p>Current fouls: {calculatePlayerFouls(selectedFoulPlayer.id)}</p>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          {selectedFoulPlayer ? (
+            <>
+              <Button variant="secondary" onClick={() => setSelectedFoulPlayer(null)}>
+                Back
+              </Button>
+              <Button variant="danger" onClick={handleFoulConfirm}>
+                Confirm Foul
+              </Button>
+            </>
+          ) : (
+            <Button variant="secondary" onClick={handleFoulModalClose}>
+              Cancel
+            </Button>
+          )}
         </Modal.Footer>
       </Modal>
     </Container>
