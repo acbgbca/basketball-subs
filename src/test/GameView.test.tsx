@@ -21,8 +21,8 @@ describe('Game Operations', () => {
     team: mockTeam,
     date: new Date(),
     periods: [
-      { id: '1', periodNumber: 1, length: 20, substitutions: [] },
-      { id: '2', periodNumber: 2, length: 20, substitutions: [] }
+      { id: '1', periodNumber: 1, length: 20, substitutions: [], fouls: [] },
+      { id: '2', periodNumber: 2, length: 20, substitutions: [], fouls: [] }
     ],
     opponent: 'Opponent Team',
     players: mockTeam.players,
@@ -155,8 +155,8 @@ describe('Game Operations', () => {
       team: { ...mockTeam, players: testPlayers },
       date: new Date(),
       periods: [
-        { id: '1', periodNumber: 1, length: 20, substitutions: [] },
-        { id: '2', periodNumber: 2, length: 20, substitutions: [] }
+        { id: '1', periodNumber: 1, length: 20, substitutions: [], fouls: [] },
+        { id: '2', periodNumber: 2, length: 20, substitutions: [], fouls: [] }
       ],
       opponent: 'Opponent Team',
       players: testPlayers,
@@ -207,6 +207,93 @@ describe('Game Operations', () => {
     await waitFor(() => {
       expect(screen.queryByTestId('too-many-players-warning')).not.toBeInTheDocument();
       expect(screen.getByTestId('sub-modal-done')).toBeEnabled();
+    });
+  });
+
+  test('records and displays player fouls', async () => {
+    const mockUpdateGame = jest.spyOn(dbService, 'updateGame');
+    const testPlayers = [
+      { id: '1', name: 'Player 1', number: '1' },
+      { id: '2', name: 'Player 2', number: '2' }
+    ];
+    const testGame = {
+      id: '1',
+      team: { ...mockTeam, players: testPlayers },
+      date: new Date(),
+      periods: [
+        { id: '1', periodNumber: 1, length: 20, substitutions: [], fouls: [] }
+      ],
+      opponent: 'Test Opponent',
+      players: testPlayers,
+      activePlayers: [],
+      currentPeriod: 0,
+      isRunning: false
+    };
+    jest.spyOn(dbService, 'getGame').mockResolvedValue(testGame as Game);
+
+    render(
+      <MemoryRouter initialEntries={['/games/1']}>
+        <Routes>
+          <Route path="/games/:id" element={<GameView />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    // Wait for game to load
+    await waitFor(() => {
+      expect(screen.getByText('Player 1')).toBeInTheDocument();
+    });
+
+    // First try to record a foul - should see warning
+    userEvent.click(screen.getByText('Foul'));
+    await waitFor(() => {
+      expect(screen.getByTestId('foul-modal').getElementsByClassName('alert')[0]).toBeInTheDocument();
+    });
+    userEvent.click(screen.getByText('Cancel'));
+
+    // Sub in Player 1
+    userEvent.click(screen.getByText('Sub'));
+    await waitFor(() => {
+      expect(screen.getByText('Manage Substitutions')).toBeInTheDocument();
+    });
+    userEvent.click(within(screen.getByTestId('substitution-modal')).getByText('Player 1'));
+    userEvent.click(screen.getByTestId('sub-modal-done'));
+
+    // Now record foul for Player 1
+    userEvent.click(screen.getByText('Foul'));
+    await waitFor(() => {
+      expect(screen.getByText('Record Foul')).toBeInTheDocument();
+    });
+
+    // Add first foul
+    userEvent.click(within(screen.getByTestId('foul-modal')).getByText('Player 1'));
+    userEvent.click(within(screen.getByTestId('foul-modal')).getByText('Done'));
+
+    await waitFor(() => {
+      expect(mockUpdateGame).toHaveBeenCalledWith(
+        expect.objectContaining({
+          periods: expect.arrayContaining([
+            expect.objectContaining({
+              fouls: expect.arrayContaining([
+                expect.objectContaining({
+                  player: expect.objectContaining({ name: 'Player 1' })
+                })
+              ])
+            })
+          ])
+        })
+      );
+    });
+
+    // Add another foul
+    userEvent.click(screen.getByText('Foul'));
+    userEvent.click(within(screen.getByTestId('foul-modal')).getByText('Player 1'));
+    userEvent.click(screen.getByText('Done'));
+
+    // Verify fouls are displayed
+    await waitFor(() => {
+      const playerRow = screen.getByTestId('player-1');
+      expect(within(playerRow).getByText('2')).toBeInTheDocument();
     });
   });
 });

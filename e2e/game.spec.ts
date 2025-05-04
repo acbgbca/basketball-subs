@@ -188,4 +188,76 @@ test.describe('Game Management', () => {
     await expect(page.getByTestId('too-many-players-warning')).not.toBeVisible();
     await expect(page.getByTestId('sub-modal-done')).toBeEnabled();
   });
+
+  test('should track player fouls', async ({ page }) => {
+    // Create team with players
+    await page.goto('/#/teams/new');
+    await page.waitForSelector('#teamName', { timeout: 5000 });
+    await page.fill('#teamName', 'Foul Test Team');
+    await page.getByRole('button', { name: 'Create Team' }).click();
+    await expect(page).toHaveURL('/#/teams');
+    
+    // Add players
+    await page.getByTestId('view-team-Foul Test Team').click();
+    await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
+    
+    // Add test player
+    await page.getByRole('button', { name: 'Add Player' }).first().click();
+    await page.waitForSelector('#playerName', { timeout: 5000 });
+    await page.fill('#playerName', 'Foul Player');
+    await page.fill('#playerNumber', '1');
+    await page.getByTestId('add-player-button').click();
+
+    // Create game
+    await page.goto('/#/games/new');
+    await page.waitForSelector('[data-testid="team-select"]', { timeout: 5000 });
+    await page.selectOption('[data-testid="team-select"]', { label: 'Foul Test Team' });
+    await page.fill('#opponent', 'Foul Opponent');
+    await page.getByLabel('1 - Foul Player').check();
+    await page.getByRole('button', { name: 'Create Game' }).click();
+
+    // Go to game view
+    await page.getByTestId('view-game-Foul Test Team').click();
+    await page.waitForURL(/\/#\/games\/.*$/, { timeout: 5000 });
+    await page.waitForSelector('[data-testid="clock-display"]', { timeout: 5000 });
+
+    // Record first foul
+    await page.getByRole('button', { name: 'Foul' }).first().click();
+    
+    // Verify warning is shown when no players are on court
+    await expect(page.getByText('No players are currently on the court')).toBeVisible();
+
+    // Close foul modal and sub in player
+    await page.getByRole('button', { name: 'Cancel' }).click();
+    await page.getByRole('button', { name: 'Sub' }).click();
+    await page.getByTestId('substitution-modal').getByText('Foul Player').click();
+    await page.getByRole('button', { name: 'Done' }).click();
+
+    // Now record the foul for player on court
+    await page.getByRole('button', { name: 'Foul' }).first().click();
+    await page.getByTestId('foul-modal').getByText('Foul Player').click();
+    await page.getByRole('button', { name: 'Done' }).click();
+
+    // Verify foul count is updated
+    await expect(page.getByTestId('player-1').locator('td').nth(3)).toHaveText('1');
+    await expect(page.getByTestId('period-fouls')).toHaveText('1 fouls');
+
+    // Record second foul
+    await page.getByRole('button', { name: 'Foul' }).first().click();
+    await page.getByTestId('foul-modal').getByText('Foul Player').click();
+    await page.getByRole('button', { name: 'Done' }).click();
+
+    // Verify foul counts are updated
+    await expect(page.getByTestId('player-1').locator('td').nth(3)).toHaveText('2');
+    await expect(page.getByTestId('period-fouls')).toHaveText('2 fouls');
+
+    // End period and verify fouls persist
+    await page.getByRole('button', { name: 'End Period' }).click();
+    await page.getByTestId('end-period-modal').getByRole('button', { name: 'End Period' }).click();
+
+    // Verify foul count persists in new period for player
+    await expect(page.getByTestId('player-1').locator('td').nth(3)).toHaveText('2');
+    // Verify new period starts with 0 fouls
+    await expect(page.getByTestId('period-fouls')).toHaveText('0 fouls');
+  });
 });
