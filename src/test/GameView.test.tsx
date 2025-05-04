@@ -138,4 +138,75 @@ describe('Game Operations', () => {
       );
     });
   });
+
+  test('validates maximum players on court in substitution modal', async () => {
+    const mockUpdateGame = jest.spyOn(dbService, 'updateGame');
+    const testPlayers = [
+      { id: '1', name: 'Player 1', number: '1' },
+      { id: '2', name: 'Player 2', number: '2' },
+      { id: '3', name: 'Player 3', number: '3' },
+      { id: '4', name: 'Player 4', number: '4' },
+      { id: '5', name: 'Player 5', number: '5' },
+      { id: '6', name: 'Player 6', number: '6' },
+      { id: '7', name: 'Player 7', number: '7' }
+    ];
+    const testGame = {
+      id: '1',
+      team: { ...mockTeam, players: testPlayers },
+      date: new Date(),
+      periods: [
+        { id: '1', periodNumber: 1, length: 20, substitutions: [] },
+        { id: '2', periodNumber: 2, length: 20, substitutions: [] }
+      ],
+      opponent: 'Opponent Team',
+      players: testPlayers,
+      activePlayers: [],
+      currentPeriod: 0,
+      isRunning: false,
+      periodStartTime: undefined,
+      periodTimeElapsed: undefined
+    };
+    jest.spyOn(dbService, 'getGame').mockResolvedValue(testGame as Game);
+
+    render(
+      <MemoryRouter initialEntries={['/games/1']}>
+        <Routes>
+          <Route path="/games/:id" element={<GameView />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Player 1')).toBeInTheDocument();
+    });
+
+    // Open sub modal and select 6 players
+    userEvent.click(screen.getByText('Sub'));
+    await waitFor(() => {
+      expect(screen.getByText('Manage Substitutions')).toBeInTheDocument();
+    });
+
+    // Select first 6 players
+    for (let i = 1; i <= 6; i++) {
+      const modal = screen.getByTestId('substitution-modal');
+      const player = within(modal).getByText(`Player ${i}`);
+      userEvent.click(player);
+    }
+
+    // Check warning is shown and done button is disabled
+    await waitFor(() => {
+      expect(screen.getByTestId('too-many-players-warning')).toBeInTheDocument();
+      expect(screen.getByTestId('sub-modal-done')).toBeDisabled();
+    });
+
+    // Deselect one player to get back to 5
+    const modal = screen.getByTestId('substitution-modal');
+    userEvent.click(within(modal).getByText('Player 6'));
+    
+    // Check warning is gone and done button is enabled
+    await waitFor(() => {
+      expect(screen.queryByTestId('too-many-players-warning')).not.toBeInTheDocument();
+      expect(screen.getByTestId('sub-modal-done')).toBeEnabled();
+    });
+  });
 });

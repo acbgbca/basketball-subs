@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Container, Row, Col, Button, Table, Badge, Modal, Form } from 'react-bootstrap';
+import { Container, Row, Col, Button, Table, Badge, Modal, Form, Alert } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { Game, Substitution } from '../types';
@@ -568,6 +568,11 @@ export const GameView: React.FC = () => {
           <Modal.Title>Manage Substitutions</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          {(activePlayers.size + subInPlayers.size - subOutPlayers.size) > 5 && (
+            <Alert variant="warning" data-testid="too-many-players-warning">
+              You have selected too many players. Only 5 players can be on the court.
+            </Alert>
+          )}
           <Row>
             <Col>
               <h5>On Court ({activePlayers.size + subInPlayers.size - subOutPlayers.size})</h5>
@@ -596,7 +601,6 @@ export const GameView: React.FC = () => {
                   variant="outline-light"
                   className="d-flex justify-content-between align-items-center mb-2 w-100 text-dark"
                   onClick={() => handleSubButtonClick(player.id, 'in')}
-                  disabled={!subInPlayers.has(player.id) && ((activePlayers.size + subInPlayers.size - subOutPlayers.size) >= 5)}
                 >
                   <span>{player.name}</span>
                   <span className={`badge ${subInPlayers.has(player.id) ? "bg-secondary" : "bg-success"}`}>
@@ -611,7 +615,12 @@ export const GameView: React.FC = () => {
           <Button variant="secondary" onClick={() => setShowSubModal(false)}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleSubModalSubmit}>
+          <Button 
+            variant="primary" 
+            onClick={handleSubModalSubmit}
+            disabled={(activePlayers.size + subInPlayers.size - subOutPlayers.size) > 5}
+            data-testid="sub-modal-done"
+          >
             Done
           </Button>
         </Modal.Footer>
