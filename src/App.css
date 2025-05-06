@@ -36,3 +36,27 @@
     transform: rotate(360deg);
   }
 }
+
+/* Add custom player button styling */
+.player-buttons-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.player-button {
+  margin-bottom: 8px;
+}
+
+/* On desktop, player buttons should fit content */
+@media (min-width: 768px) {
+  .player-buttons-container {
+    display: inline-flex;
+    align-items: flex-start;
+  }
+
+  .player-button {
+    width: auto !important;
+    min-width: var(--max-button-width, fit-content);
+  }
+}

@@ -10,7 +10,8 @@
 				"github.vscode-github-actions",
 				"mhutchie.git-graph",
 				"ms-playwright.playwright",
-				"Orta.vscode-jest"
+				"Orta.vscode-jest",
+				"GitHub.vscode-pull-request-github"
 			]
 		}
 	},

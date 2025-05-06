@@ -57,8 +57,7 @@ describe('Game Operations', () => {
     // Fill out the form
     await userEvent.type(screen.getByLabelText('Opponent'), 'Opponent Team');
     await userEvent.selectOptions(screen.getByTestId('team-select'), '1');
-    await userEvent.click(screen.getByLabelText('23 - Player 1'));
-    await userEvent.click(screen.getByLabelText('24 - Player 2'));
+    // All players are auto-selected by default
     await userEvent.click(screen.getByText('Create Game'));
 
     await waitFor(() => {
@@ -92,8 +91,7 @@ describe('Game Operations', () => {
     await userEvent.selectOptions(screen.getByTestId('game-format-select'), '2-20');
     await userEvent.selectOptions(screen.getByTestId('team-select'), '1');
     await userEvent.type(screen.getByLabelText('Opponent'), 'Opponent Team');
-    await userEvent.click(screen.getByLabelText('23 - Player 1'));
-    await userEvent.click(screen.getByLabelText('24 - Player 2'));
+    // All players are auto-selected by default
     await userEvent.click(screen.getByText('Create Game'));
 
     await waitFor(() => {
@@ -130,8 +128,7 @@ describe('Game Operations', () => {
     await userEvent.selectOptions(screen.getByTestId('game-format-select'), '4-10');
     await userEvent.selectOptions(screen.getByTestId('team-select'), '1');
     await userEvent.type(screen.getByLabelText('Opponent'), 'Opponent Team');
-    await userEvent.click(screen.getByLabelText('23 - Player 1'));
-    await userEvent.click(screen.getByLabelText('24 - Player 2'));
+    // All players are auto-selected by default
     await userEvent.click(screen.getByText('Create Game'));
 
     await waitFor(() => {
@@ -237,6 +234,41 @@ describe('Game Operations', () => {
           players: expect.not.arrayContaining([
             expect.objectContaining({ name: 'Edited Fill In Player 1', number: '100' })
           ])
+        })
+      );
+    });
+  });
+
+  test('should auto-select all players when choosing a team', async () => {
+    const mockAddGame = jest.spyOn(dbService, 'addGame');
+
+    render(
+      <HashRouter>
+        <GameForm />
+      </HashRouter>
+    );
+
+    // Wait for the team to be loaded
+    await waitFor(() => {
+      expect(dbService.getTeams).toHaveBeenCalledTimes(1);
+    });
+
+    // Select team and verify players are auto-selected
+    await userEvent.type(screen.getByLabelText('Opponent'), 'Test Team');
+    await userEvent.selectOptions(screen.getByTestId('team-select'), '1');
+    await waitFor(() => {
+      expect(screen.getByText('Players (2 selected)')).toBeInTheDocument();
+    });
+    await userEvent.click(screen.getByText('Create Game'));
+
+    // Verify all players were included
+    await waitFor(() => {
+      expect(mockAddGame).toHaveBeenCalledWith(
+        expect.objectContaining({
+          players: [
+            expect.objectContaining({ id: '1', name: 'Player 1', number: '23' }),
+            expect.objectContaining({ id: '2', name: 'Player 2', number: '24' })
+          ]
         })
       );
     });
