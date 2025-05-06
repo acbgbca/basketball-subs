@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Form, Button, Container, Modal } from 'react-bootstrap';
+import React, { useState, useEffect, useRef } from 'react';
+import { Form, Button, Container, Modal, Badge } from 'react-bootstrap';
 import { v4 as uuidv4 } from 'uuid';
 import { Game, Team, Player } from '../types';
 import { dbService } from '../services/db';
@@ -18,6 +18,7 @@ export const GameForm: React.FC = () => {
   const [editingFillInPlayerId, setEditingFillInPlayerId] = useState<string | null>(null);
   const [showFillInPlayerModal, setShowFillInPlayerModal] = useState(false);
   const navigate = useNavigate();
+  const buttonsContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadTeams = async () => {
@@ -27,10 +28,26 @@ export const GameForm: React.FC = () => {
     loadTeams();
   }, []);
 
+  useEffect(() => {
+    // Calculate max button width when team or selected players change
+    if (buttonsContainerRef.current && selectedTeam) {
+      const buttons = buttonsContainerRef.current.querySelectorAll('.player-button');
+      const maxWidth = Array.from(buttons).reduce((max, button) => {
+        const width = button.getBoundingClientRect().width;
+        return width > max ? width : max;
+      }, 0);
+      
+      if (maxWidth > 0) {
+        buttonsContainerRef.current.style.setProperty('--max-button-width', `${maxWidth}px`);
+      }
+    }
+  }, [selectedTeam, selectedPlayers]);
+
   const handleTeamChange = (teamId: string) => {
     const team = teams.find(t => t.id === teamId) || null;
     setSelectedTeam(team);
-    setSelectedPlayers(new Set());
+    // Select all players by default
+    setSelectedPlayers(new Set(team?.players.map(p => p.id) || []));
   };
 
   const handlePlayerToggle = (playerId: string) => {
@@ -156,21 +173,25 @@ export const GameForm: React.FC = () => {
 
         {selectedTeam && (
           <Form.Group className="mb-3">
-            <Form.Label>Players</Form.Label>
-            {selectedTeam.players.map(player => (
-              <Form.Check
-                key={player.id}
-                id={`player-${player.id}`}
-                type="checkbox"
-                label={`${player.number} - ${player.name}`}
-                checked={selectedPlayers.has(player.id)}
-                onChange={() => handlePlayerToggle(player.id)}
-              />
-            ))}
+            <Form.Label>Players ({selectedPlayers.size} selected)</Form.Label>
+            <div className="player-buttons-container" ref={buttonsContainerRef}>
+              {selectedTeam.players
+                .sort((a, b) => parseInt(a.number) - parseInt(b.number))
+                .map(player => (
+                  <Button
+                    key={player.id}
+                    variant={selectedPlayers.has(player.id) ? "primary" : "outline-primary"}
+                    onClick={() => handlePlayerToggle(player.id)}
+                    className="player-button d-flex justify-content-between align-items-center"
+                  >
+                    <span>{player.number} - {player.name}</span>
+                  </Button>
+              ))}
+            </div>
           </Form.Group>
         )}
 
-        <Button variant="secondary" onClick={() => setShowFillInPlayerModal(true)}>
+        <Button variant="secondary" onClick={() => setShowFillInPlayerModal(true)} className="mb-3">
           Add Fill in Player
         </Button>
 

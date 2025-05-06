@@ -74,10 +74,7 @@ test.describe('Period Management', () => {
     await page.selectOption('[data-testid="team-select"]', { label: 'Sub Period Team' });
     await page.fill('#opponent', 'Sub Period Opponent');
     await page.selectOption('[data-testid="game-format-select"]', '4-10');
-    
-    // Select the player for the game
-    await page.getByLabel('10 - Test Player').check();
-    
+    // Players are auto-selected by default
     await page.getByRole('button', { name: 'Create Game' }).click();
     await expect(page).toHaveURL('/#/games');
 

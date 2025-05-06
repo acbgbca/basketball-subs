@@ -21,6 +21,57 @@ test.describe('Game Management', () => {
     await expect(page.getByText('Test Opponent')).toBeVisible({ timeout: 5000 });
   });
 
+  test('should create a new game with auto-selected players', async ({ page }) => {
+    // First create a team with players
+    await page.goto('/#/teams/new');
+    await page.waitForSelector('#teamName', { timeout: 5000 });
+    await page.fill('#teamName', 'Auto Select Team');
+    await page.getByRole('button', { name: 'Create Team' }).click();
+    await expect(page).toHaveURL('/#/teams');
+    
+    // Add players
+    await page.getByTestId('view-team-Auto Select Team').click();
+    await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
+    
+    // Add player 1
+    await page.getByRole('button', { name: 'Add Player' }).first().click();
+    await page.waitForSelector('#playerName', { timeout: 5000 });
+    await page.fill('#playerName', 'Auto Player 1');
+    await page.fill('#playerNumber', '1');
+    await page.getByTestId('add-player-button').click();
+    
+    // Wait for first player to be added before adding second
+    await expect(page.getByText('Auto Player 1')).toBeVisible({ timeout: 5000 });
+    
+    // Add player 2
+    await page.getByRole('button', { name: 'Add Player' }).first().click();
+    await page.waitForSelector('#playerName', { timeout: 5000 });
+    await page.fill('#playerName', 'Auto Player 2');
+    await page.fill('#playerNumber', '2');
+    await page.getByTestId('add-player-button').click();
+
+    // Create game
+    await page.goto('/#/games/new');
+    await page.waitForSelector('[data-testid="team-select"]', { timeout: 5000 });
+    
+    // Select team and verify players are auto-selected
+    await page.selectOption('[data-testid="team-select"]', { label: 'Auto Select Team' });
+    await expect(page.getByText('(2 selected)')).toBeVisible({ timeout: 5000 });
+    
+    // Verify both players are selected
+    await expect(page.getByText('Auto Player 1').locator('..')).toHaveAttribute('class', /primary/);
+    await expect(page.getByText('Auto Player 2').locator('..')).toHaveAttribute('class', /primary/);
+
+    // Complete game creation
+    await page.fill('#opponent', 'Auto Select Opponent');
+    await page.getByRole('button', { name: 'Create Game' }).click();
+
+    // Verify game was created
+    await expect(page).toHaveURL('/#/games');
+    await expect(page.getByText('Auto Select Team')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Auto Select Opponent')).toBeVisible({ timeout: 5000 });
+  });
+
   test('should manage game clock', async ({ page }) => {
     // Create team and game first
     await page.goto('/#/teams/new');
@@ -95,11 +146,7 @@ test.describe('Game Management', () => {
     await page.waitForSelector('[data-testid="team-select"]', { timeout: 5000 });
     await page.selectOption('[data-testid="team-select"]', { label: 'Sub Test Team' });
     await page.fill('#opponent', 'Sub Opponent');
-    
-    // Select players for the game
-    await page.getByLabel('1 - Player One').check();
-    await page.getByLabel('2 - Player Two').check();
-    
+    // Players are auto-selected by default
     await page.getByRole('button', { name: 'Create Game' }).click();
 
     // Go to game view
@@ -154,12 +201,7 @@ test.describe('Game Management', () => {
     await page.waitForSelector('[data-testid="team-select"]', { timeout: 5000 });
     await page.selectOption('[data-testid="team-select"]', { label: 'Max Players Team' });
     await page.fill('#opponent', 'Max Players Opponent');
-    
-    // Select all players for the game
-    for (let i = 1; i <= 7; i++) {
-      await page.getByLabel(`${i} - Max Player ${i}`).check();
-    }
-    
+    // Players are auto-selected by default
     await page.getByRole('button', { name: 'Create Game' }).click();
 
     // Go to game view
@@ -213,7 +255,7 @@ test.describe('Game Management', () => {
     await page.waitForSelector('[data-testid="team-select"]', { timeout: 5000 });
     await page.selectOption('[data-testid="team-select"]', { label: 'Foul Test Team' });
     await page.fill('#opponent', 'Foul Opponent');
-    await page.getByLabel('1 - Foul Player').check();
+    // Player is auto-selected by default
     await page.getByRole('button', { name: 'Create Game' }).click();
 
     // Go to game view
