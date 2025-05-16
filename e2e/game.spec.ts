@@ -34,21 +34,21 @@ test.describe('Game Management', () => {
     await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
     
     // Add player 1
-    await page.getByRole('button', { name: 'Add Player' }).first().click();
-    await page.waitForSelector('#playerName', { timeout: 5000 });
-    await page.fill('#playerName', 'Auto Player 1');
-    await page.fill('#playerNumber', '1');
-    await page.getByTestId('add-player-button').click();
-    
-    // Wait for first player to be added before adding second
-    await expect(page.getByText('Auto Player 1')).toBeVisible({ timeout: 5000 });
+    await page.getByRole('button', { name: 'Add Player' }).click();
+    const rows = await page.getByRole('row').all();
+    let lastRow = rows[rows.length - 1];
+    await lastRow.getByLabel('Player Number').fill('1');
+    await lastRow.getByLabel('Player Name').fill('Auto Player 1');
     
     // Add player 2
-    await page.getByRole('button', { name: 'Add Player' }).first().click();
-    await page.waitForSelector('#playerName', { timeout: 5000 });
-    await page.fill('#playerName', 'Auto Player 2');
-    await page.fill('#playerNumber', '2');
-    await page.getByTestId('add-player-button').click();
+    await page.getByRole('button', { name: 'Add Player' }).click();
+    const updatedRows = await page.getByRole('row').all();
+    lastRow = updatedRows[updatedRows.length - 1];
+    await lastRow.getByLabel('Player Number').fill('2');
+    await lastRow.getByLabel('Player Name').fill('Auto Player 2');
+    
+    // Save the changes
+    await page.getByRole('button', { name: 'Save Changes' }).click();
 
     // Create game
     await page.goto('/#/games/new');
@@ -126,20 +126,22 @@ test.describe('Game Management', () => {
     await page.getByTestId('view-team-Sub Test Team').click();
     await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
     
-    // Explicitly wait for the Add Player button and use first() to handle multiple matches
-    await page.getByRole('button', { name: 'Add Player' }).first().click();
-    await page.waitForSelector('#playerName', { timeout: 5000 });
-    await page.fill('#playerName', 'Player One');
-    await page.fill('#playerNumber', '1');
-    await page.getByTestId('add-player-button').click();
+    // Add player 1
+    await page.getByRole('button', { name: 'Add Player' }).click();
+    const rows = await page.getByRole('row').all();
+    let lastRow = rows[rows.length - 1];
+    await lastRow.getByLabel('Player Number').fill('1');
+    await lastRow.getByLabel('Player Name').fill('Player One');
     
-    // Wait for the first player to be added before adding the second
-    await expect(page.getByText('Player One')).toBeVisible({ timeout: 5000 });
-    await page.getByRole('button', { name: 'Add Player' }).first().click();
-    await page.waitForSelector('#playerName', { timeout: 5000 });
-    await page.fill('#playerName', 'Player Two');
-    await page.fill('#playerNumber', '2');
-    await page.getByTestId('add-player-button').click();
+    // Add player 2
+    await page.getByRole('button', { name: 'Add Player' }).click();
+    const updatedRows = await page.getByRole('row').all();
+    lastRow = updatedRows[updatedRows.length - 1];
+    await lastRow.getByLabel('Player Number').fill('2');
+    await lastRow.getByLabel('Player Name').fill('Player Two');
+    
+    // Save the changes
+    await page.getByRole('button', { name: 'Save Changes' }).click();
 
     // Create game
     await page.goto('/#/games/new');
@@ -187,14 +189,15 @@ test.describe('Game Management', () => {
     
     // Add 7 players
     for (let i = 1; i <= 7; i++) {
-      await page.getByRole('button', { name: 'Add Player' }).first().click();
-      await page.waitForSelector('#playerName', { timeout: 5000 });
-      await page.fill('#playerName', `Max Player ${i}`);
-      await page.fill('#playerNumber', i.toString());
-      await page.getByTestId('add-player-button').click();
-      // Wait for the player to be added before continuing
-      await expect(page.getByText(`Max Player ${i}`)).toBeVisible({ timeout: 5000 });
+      await page.getByRole('button', { name: 'Add Player' }).click();
+      const rows = await page.getByRole('row').all();
+      const lastRow = rows[rows.length - 1];
+      await lastRow.getByLabel('Player Number').fill(i.toString());
+      await lastRow.getByLabel('Player Name').fill(`Max Player ${i}`);
     }
+    
+    // Save the changes
+    await page.getByRole('button', { name: 'Save Changes' }).click();
 
     // Create game
     await page.goto('/#/games/new');
@@ -244,11 +247,14 @@ test.describe('Game Management', () => {
     await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
     
     // Add test player
-    await page.getByRole('button', { name: 'Add Player' }).first().click();
-    await page.waitForSelector('#playerName', { timeout: 5000 });
-    await page.fill('#playerName', 'Foul Player');
-    await page.fill('#playerNumber', '1');
-    await page.getByTestId('add-player-button').click();
+    await page.getByRole('button', { name: 'Add Player' }).click();
+    const rows = await page.getByRole('row').all();
+    const lastRow = rows[rows.length - 1];
+    await lastRow.getByLabel('Player Number').fill('1');
+    await lastRow.getByLabel('Player Name').fill('Foul Player');
+    
+    // Save the changes
+    await page.getByRole('button', { name: 'Save Changes' }).click();
 
     // Create game
     await page.goto('/#/games/new');

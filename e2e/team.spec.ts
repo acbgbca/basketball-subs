@@ -36,13 +36,22 @@ test.describe('Team Management', () => {
     // Navigate to team view and add player
     await page.getByRole('button', { name: 'View Team' }).click();
     await page.getByRole('button', { name: 'Add Player' }).click();
-    await page.waitForSelector('#playerName');
-    await page.fill('#playerName', 'John Doe');
-    await page.fill('#playerNumber', '23');
-    await page.getByTestId('add-player-button').click();
     
-    await expect(page.getByText('John Doe')).toBeVisible();
-    await expect(page.getByText('23')).toBeVisible();
+    // Fill in the new player row that appears in the table
+    const rows = await page.getByRole('row').all();
+    const lastRow = rows[rows.length - 1]; // New player is added at the end
+    
+    // Fill in player details in the table inputs
+    await lastRow.getByLabel('Player Number').fill('23');
+    await lastRow.getByLabel('Player Name').fill('John Doe');
+    
+    // Save the changes
+    await page.getByRole('button', { name: 'Save Changes' }).click();
+    
+    // Verify the player appears in the table
+    await expect(page.getByTestId('player-23')).toBeVisible();
+    await expect(page.getByTestId('player-23').getByLabel('Player Name')).toHaveValue('John Doe');
+    await expect(page.getByTestId('player-23').getByLabel('Player Number')).toHaveValue('23');
   });
 });
 

@@ -62,11 +62,14 @@ test.describe('Period Management', () => {
     // Add a player
     await page.getByTestId('view-team-Sub Period Team').click();
     await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
-    await page.getByRole('button', { name: 'Add Player' }).first().click();
-    await page.waitForSelector('#playerName', { timeout: 5000 });
-    await page.fill('#playerName', 'Test Player');
-    await page.fill('#playerNumber', '10');
-    await page.getByTestId('add-player-button').click();
+    await page.getByRole('button', { name: 'Add Player' }).click();
+    const rows = await page.getByRole('row').all();
+    const lastRow = rows[rows.length - 1];
+    await lastRow.getByLabel('Player Number').fill('10');
+    await lastRow.getByLabel('Player Name').fill('Test Player');
+    
+    // Save the changes
+    await page.getByRole('button', { name: 'Save Changes' }).click();
 
     // Create game with quarters
     await page.goto('/#/games/new');
