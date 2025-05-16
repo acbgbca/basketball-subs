@@ -58,10 +58,13 @@ export const TeamView: React.FC = () => {
     await dbService.updateTeam(updatedTeam);
     setTeam(updatedTeam);
     setHasChanges(false);
-    navigate('/teams');
   };
 
   const handleCancel = () => {
+    navigate('/teams');
+  };
+
+  const handleDone = () => {
     navigate('/teams');
   };
 
@@ -94,6 +97,7 @@ export const TeamView: React.FC = () => {
                       value={player.number}
                       onChange={(e) => handlePlayerChange(player.id, 'number', e.target.value)}
                       required
+                      aria-label="Player Number"
                     />
                   </td>
                   <td>
@@ -102,6 +106,7 @@ export const TeamView: React.FC = () => {
                       value={player.name}
                       onChange={(e) => handlePlayerChange(player.id, 'name', e.target.value)}
                       required
+                      aria-label="Player Name"
                     />
                   </td>
                   <td>
@@ -136,8 +141,15 @@ export const TeamView: React.FC = () => {
                 variant="success" 
                 onClick={handleSave}
                 disabled={!hasChanges}
+                className="me-2"
               >
                 Save Changes
+              </Button>
+              <Button 
+                variant="primary" 
+                onClick={handleDone}
+              >
+                Done
               </Button>
             </div>
           </div>

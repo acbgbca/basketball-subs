@@ -85,9 +85,10 @@ describe('Team Operations', () => {
 
     // Add player
     await userEvent.click(screen.getByText('Add Player'));
-    await userEvent.type(screen.getByLabelText('Name'), 'New Player');
-    await userEvent.type(screen.getByLabelText('Number'), '24');
-    await userEvent.click(screen.getByTestId('add-player-button'));
+    const inputs = screen.getAllByRole('textbox');
+    await userEvent.type(inputs[inputs.length - 2], '24'); // Number input comes first
+    await userEvent.type(inputs[inputs.length - 1], 'New Player');  // Name input comes second
+    await userEvent.click(screen.getByText('Save Changes'));
 
     await waitFor(() => {
       expect(mockUpdateTeam).toHaveBeenCalledWith(
@@ -100,10 +101,10 @@ describe('Team Operations', () => {
     });
 
     // Edit player
-    let playerRow = screen.getByTestId('player-24')
-    await userEvent.click(within(playerRow).getByText('Edit'));
-    await userEvent.clear(screen.getByLabelText('Name'));
-    await userEvent.type(screen.getByLabelText('Name'), 'Updated Player')
+    const allInputs = screen.getAllByRole('textbox');
+    const nameInputs = allInputs.filter(input => input.getAttribute('value') === 'New Player');
+    await userEvent.clear(nameInputs[0]);
+    await userEvent.type(nameInputs[0], 'Updated Player');
     await userEvent.click(screen.getByText('Save Changes'));
 
     await waitFor(() => {
@@ -116,8 +117,9 @@ describe('Team Operations', () => {
       );
     });
 
-    // Delete player
-    await userEvent.click(within(playerRow).getByText('Remove'));
+    // Delete player and save changes
+    await userEvent.click(screen.getByText('Remove'));
+    await userEvent.click(screen.getByText('Save Changes'));
 
     await waitFor(() => {
       expect(mockUpdateTeam).toHaveBeenCalledWith(
@@ -127,4 +129,4 @@ describe('Team Operations', () => {
       );
     });
   });
-}); 
+});
