@@ -80,7 +80,7 @@ describe('Team Operations', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Test Team')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Test Team')).toBeInTheDocument();
     });
 
     // Add player
@@ -125,6 +125,47 @@ describe('Team Operations', () => {
       expect(mockUpdateTeam).toHaveBeenCalledWith(
         expect.objectContaining({
           players: []
+        })
+      );
+    });
+  });
+
+  test('edits team name', async () => {
+    const mockTeam = { 
+      id: '1', 
+      name: 'Test Team', 
+      players: []
+    };
+    
+    const mockUpdateTeam = jest.spyOn(dbService, 'updateTeam');
+    jest.spyOn(dbService, 'getTeam').mockResolvedValue(mockTeam);
+
+    render(
+      <MemoryRouter initialEntries={['/teams/1']}>
+        <Routes>
+          <Route path="/teams/:id" element={<TeamView />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    // Wait for team to load
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Test Team')).toBeInTheDocument();
+    });
+
+    // Edit team name
+    const teamNameInput = screen.getByDisplayValue('Test Team');
+    await userEvent.clear(teamNameInput);
+    await userEvent.type(teamNameInput, 'Updated Team Name');
+
+    // Save changes
+    await userEvent.click(screen.getByText('Save Changes'));
+
+    // Verify team was updated with new name
+    await waitFor(() => {
+      expect(mockUpdateTeam).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Updated Team Name'
         })
       );
     });

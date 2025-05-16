@@ -10,6 +10,7 @@ export const TeamView: React.FC = () => {
   const navigate = useNavigate();
   const [team, setTeam] = useState<Team | null>(null);
   const [editedPlayers, setEditedPlayers] = useState<Player[]>([]);
+  const [editedTeamName, setEditedTeamName] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
@@ -18,6 +19,7 @@ export const TeamView: React.FC = () => {
         const teamData = await dbService.getTeam(id);
         setTeam(teamData);
         setEditedPlayers(teamData?.players || []);
+        setEditedTeamName(teamData?.name || '');
       }
     };
     loadTeam();
@@ -47,11 +49,17 @@ export const TeamView: React.FC = () => {
     setHasChanges(true);
   };
 
+  const handleTeamNameChange = (value: string) => {
+    setEditedTeamName(value);
+    setHasChanges(true);
+  };
+
   const handleSave = async () => {
     if (!team) return;
 
     const updatedTeam: Team = {
       ...team,
+      name: editedTeamName,
       players: editedPlayers
     };
 
@@ -74,7 +82,15 @@ export const TeamView: React.FC = () => {
     <Container>
       <Row className="mb-4">
         <Col>
-          <h2>{team.name}</h2>
+          <Form.Control
+            type="text"
+            value={editedTeamName}
+            onChange={(e) => handleTeamNameChange(e.target.value)}
+            className="h2 border-0 bg-transparent"
+            style={{ fontSize: '2rem' }}
+            required
+            aria-label="Team Name"
+          />
         </Col>
       </Row>
 

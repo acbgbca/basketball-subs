@@ -22,7 +22,8 @@ test.describe('Team Management', () => {
     
     // Then view its details
     await page.getByRole('button', { name: 'View Team' }).click();
-    await expect(page.getByRole('heading')).toContainText('View Test Team');
+    await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
+    await expect(page.getByLabel('Team Name')).toHaveValue('View Test Team');
   });
 
   test('should add a player to team', async ({ page }) => {
@@ -52,6 +53,30 @@ test.describe('Team Management', () => {
     await expect(page.getByTestId('player-23')).toBeVisible();
     await expect(page.getByTestId('player-23').getByLabel('Player Name')).toHaveValue('John Doe');
     await expect(page.getByTestId('player-23').getByLabel('Player Number')).toHaveValue('23');
+  });
+
+  test('should edit team name', async ({ page }) => {
+    // First create a team
+    await page.goto('/#/teams/new');
+    await page.waitForSelector('#teamName');
+    await page.fill('#teamName', 'Edit Name Team');
+    await page.getByRole('button', { name: 'Create Team' }).click();
+    await expect(page).toHaveURL('/#/teams');
+    
+    // Navigate to team view
+    await page.getByTestId('view-team-Edit Name Team').click();
+    await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
+    
+    // Edit team name
+    const teamNameInput = page.getByLabel('Team Name');
+    await teamNameInput.clear();
+    await teamNameInput.fill('Updated Team Name');
+    
+    // Save changes
+    await page.getByRole('button', { name: 'Save Changes' }).click();
+    
+    // Verify updates are saved - should show the new name
+    await expect(page.getByLabel('Team Name')).toHaveValue('Updated Team Name');
   });
 });
 
