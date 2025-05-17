@@ -99,7 +99,7 @@ export const TeamView: React.FC = () => {
           <Table striped bordered hover>
             <thead>
               <tr>
-                <th>Number</th>
+                <th style={{ width: '100px' }}>Number</th>
                 <th>Name</th>
                 <th>Actions</th>
               </tr>
@@ -110,10 +110,14 @@ export const TeamView: React.FC = () => {
                   <td>
                     <Form.Control
                       type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={3}
                       value={player.number}
                       onChange={(e) => handlePlayerChange(player.id, 'number', e.target.value)}
                       required
                       aria-label="Player Number"
+                      style={{ width: '80px' }}
                     />
                   </td>
                   <td>
