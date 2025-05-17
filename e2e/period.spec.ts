@@ -2,12 +2,13 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Period Management', () => {
   test('should handle periods in a game', async ({ page }) => {
-    // Setup team and game
-    await page.goto('/#/teams/new');
-    await page.waitForSelector('#teamName', { timeout: 5000 });
+    // Setup team and game using modal
+    await page.goto('/#/teams');
+    await page.getByRole('button', { name: 'Add New Team' }).click();
     await page.fill('#teamName', 'Period Test Team');
     await page.getByRole('button', { name: 'Create Team' }).click();
-    await expect(page).toHaveURL('/#/teams');
+    await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
+    await page.goto('/#/teams');
 
     await page.goto('/#/games/new');
     await page.waitForSelector('[data-testid="team-select"]', { timeout: 5000 });
@@ -52,21 +53,22 @@ test.describe('Period Management', () => {
   });
 
   test('should track substitutions across periods', async ({ page }) => {
-    // Setup team with players
-    await page.goto('/#/teams/new');
-    await page.waitForSelector('#teamName', { timeout: 5000 });
+    // Setup team with players using modal
+    await page.goto('/#/teams');
+    await page.getByRole('button', { name: 'Add New Team' }).click();
     await page.fill('#teamName', 'Sub Period Team');
     await page.getByRole('button', { name: 'Create Team' }).click();
-    await expect(page).toHaveURL('/#/teams');
+    await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
     
     // Add a player
-    await page.getByTestId('view-team-Sub Period Team').click();
-    await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
-    await page.getByRole('button', { name: 'Add Player' }).first().click();
-    await page.waitForSelector('#playerName', { timeout: 5000 });
-    await page.fill('#playerName', 'Test Player');
-    await page.fill('#playerNumber', '10');
-    await page.getByTestId('add-player-button').click();
+    await page.getByRole('button', { name: 'Add Player' }).click();
+    const rows = await page.getByRole('row').all();
+    const lastRow = rows[rows.length - 1];
+    await lastRow.getByLabel('Player Number').fill('10');
+    await lastRow.getByLabel('Player Name').fill('Test Player');
+    
+    // Save the changes
+    await page.getByRole('button', { name: 'Save Changes' }).click();
 
     // Create game with quarters
     await page.goto('/#/games/new');

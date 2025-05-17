@@ -14,18 +14,48 @@ describe('Team Operations', () => {
     jest.clearAllMocks();
   });
 
-  test('creates a new team', async () => {
+  test('creates a new team from modal', async () => {
+    const mockAddTeam = jest.spyOn(dbService, 'addTeam');
+    jest.spyOn(dbService, 'getTeams').mockResolvedValue([]);
+    
+    render(
+      <MemoryRouter>
+        <TeamList />
+      </MemoryRouter>
+    );
+
+    // Open the modal
+    await userEvent.click(screen.getByText('Add New Team'));
+    
+    // Fill out and submit the form
+    await userEvent.type(screen.getByLabelText('Team Name'), 'Test Team');
+    await userEvent.click(screen.getByText('Create Team'));
+
+    // Verify team was created with correct data
+    await waitFor(() => {
+      expect(mockAddTeam).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Test Team',
+          players: []
+        })
+      );
+    });
+  });
+
+  test('creates a new team from standalone page and navigates to team view', async () => {
     const mockAddTeam = jest.spyOn(dbService, 'addTeam');
     
     render(
       <MemoryRouter>
-        <TeamForm />
+        <Routes>
+          <Route path="/" element={<TeamForm />} />
+          <Route path="/teams/:id" element={<TeamView />} />
+        </Routes>
       </MemoryRouter>
     );
 
-    userEvent.type(screen.getByLabelText('Team Name'), 'Test Team');
-
-    userEvent.click(screen.getByText('Create Team'));
+    await userEvent.type(screen.getByLabelText('Team Name'), 'Test Team');
+    await userEvent.click(screen.getByText('Create Team'));
 
     await waitFor(() => {
       expect(mockAddTeam).toHaveBeenCalledWith(
@@ -80,14 +110,15 @@ describe('Team Operations', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Test Team')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Test Team')).toBeInTheDocument();
     });
 
     // Add player
     await userEvent.click(screen.getByText('Add Player'));
-    await userEvent.type(screen.getByLabelText('Name'), 'New Player');
-    await userEvent.type(screen.getByLabelText('Number'), '24');
-    await userEvent.click(screen.getByTestId('add-player-button'));
+    const inputs = screen.getAllByRole('textbox');
+    await userEvent.type(inputs[inputs.length - 2], '24'); // Number input comes first
+    await userEvent.type(inputs[inputs.length - 1], 'New Player');  // Name input comes second
+    await userEvent.click(screen.getByText('Save Changes'));
 
     await waitFor(() => {
       expect(mockUpdateTeam).toHaveBeenCalledWith(
@@ -100,10 +131,10 @@ describe('Team Operations', () => {
     });
 
     // Edit player
-    let playerRow = screen.getByTestId('player-24')
-    await userEvent.click(within(playerRow).getByText('Edit'));
-    await userEvent.clear(screen.getByLabelText('Name'));
-    await userEvent.type(screen.getByLabelText('Name'), 'Updated Player')
+    const allInputs = screen.getAllByRole('textbox');
+    const nameInputs = allInputs.filter(input => input.getAttribute('value') === 'New Player');
+    await userEvent.clear(nameInputs[0]);
+    await userEvent.type(nameInputs[0], 'Updated Player');
     await userEvent.click(screen.getByText('Save Changes'));
 
     await waitFor(() => {
@@ -116,8 +147,9 @@ describe('Team Operations', () => {
       );
     });
 
-    // Delete player
-    await userEvent.click(within(playerRow).getByText('Remove'));
+    // Delete player and save changes
+    await userEvent.click(screen.getByText('Remove'));
+    await userEvent.click(screen.getByText('Save Changes'));
 
     await waitFor(() => {
       expect(mockUpdateTeam).toHaveBeenCalledWith(
@@ -127,4 +159,44 @@ describe('Team Operations', () => {
       );
     });
   });
-}); 
+
+  test('edits team name', async () => {
+    const mockTeam = { 
+      id: '1', 
+      name: 'Test Team', 
+      players: []
+    };
+    const mockUpdateTeam = jest.spyOn(dbService, 'updateTeam');
+    jest.spyOn(dbService, 'getTeam').mockResolvedValue(mockTeam);
+
+    render(
+      <MemoryRouter initialEntries={['/teams/1']}>
+        <Routes>
+          <Route path="/teams/:id" element={<TeamView />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    // Wait for team to load
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Test Team')).toBeInTheDocument();
+    });
+
+    // Edit team name
+    const teamNameInput = screen.getByDisplayValue('Test Team');
+    await userEvent.clear(teamNameInput);
+    await userEvent.type(teamNameInput, 'Updated Team Name');
+
+    // Save changes
+    await userEvent.click(screen.getByText('Save Changes'));
+
+    // Verify team was updated with new name
+    await waitFor(() => {
+      expect(mockUpdateTeam).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Updated Team Name'
+        })
+      );
+    });
+  });
+});

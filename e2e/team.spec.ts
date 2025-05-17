@@ -1,48 +1,76 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Team Management', () => {
-  test('should create a new team', async ({ page }) => {
-    await page.goto('/#/teams/new');
-    // Wait for navigation and form to be ready
-    await page.waitForSelector('#teamName');
+  test('should create a new team and navigate to team view', async ({ page }) => {
+    await page.goto('/#/teams');
+    await page.getByRole('button', { name: 'Add New Team' }).click();
     
     await page.fill('#teamName', 'Test Team');
     await page.getByRole('button', { name: 'Create Team' }).click();
-    await expect(page).toHaveURL('/#/teams');
-    await expect(page.getByText('Test Team')).toBeVisible();
-  });
-
-  test('should view team details', async ({ page }) => {
+    
+    // Should navigate to team view
+    await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
+    await expect(page.getByLabel('Team Name')).toHaveValue('Test Team');
+  });  test('should view team details', async ({ page }) => {
     // First create a team
-    await page.goto('/#/teams/new');
-    await page.waitForSelector('#teamName');
+    await page.goto('/#/teams');
+    await page.getByRole('button', { name: 'Add New Team' }).click();
     await page.fill('#teamName', 'View Test Team');
     await page.getByRole('button', { name: 'Create Team' }).click();
-    await expect(page).toHaveURL('/#/teams');
     
-    // Then view its details
-    await page.getByRole('button', { name: 'View Team' }).click();
-    await expect(page.getByRole('heading')).toContainText('View Test Team');
+    // Should go directly to team view
+    await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
+    await expect(page.getByLabel('Team Name')).toHaveValue('View Test Team');
   });
 
   test('should add a player to team', async ({ page }) => {
     // First create a team
-    await page.goto('/#/teams/new');
-    await page.waitForSelector('#teamName');
+    await page.goto('/#/teams');
+    await page.getByRole('button', { name: 'Add New Team' }).click();
     await page.fill('#teamName', 'Player Test Team');
     await page.getByRole('button', { name: 'Create Team' }).click();
-    await expect(page).toHaveURL('/#/teams');
     
-    // Navigate to team view and add player
-    await page.getByRole('button', { name: 'View Team' }).click();
+    // Should navigate to team view page
+    await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
+    
+    // Add player
     await page.getByRole('button', { name: 'Add Player' }).click();
-    await page.waitForSelector('#playerName');
-    await page.fill('#playerName', 'John Doe');
-    await page.fill('#playerNumber', '23');
-    await page.getByTestId('add-player-button').click();
+    const rows = await page.getByRole('row').all();
+    const lastRow = rows[rows.length - 1]; // New player is added at the end
     
-    await expect(page.getByText('John Doe')).toBeVisible();
-    await expect(page.getByText('23')).toBeVisible();
+    // Fill in player details in the table inputs
+    await lastRow.getByLabel('Player Number').fill('23');
+    await lastRow.getByLabel('Player Name').fill('John Doe');
+    
+    // Save the changes
+    await page.getByRole('button', { name: 'Save Changes' }).click();
+    
+    // Verify the player appears in the table
+    await expect(page.getByTestId('player-23')).toBeVisible();
+    await expect(page.getByTestId('player-23').getByLabel('Player Name')).toHaveValue('John Doe');
+    await expect(page.getByTestId('player-23').getByLabel('Player Number')).toHaveValue('23');
+  });
+
+  test('should edit team name', async ({ page }) => {
+    // First create a team using modal
+    await page.goto('/#/teams');
+    await page.getByRole('button', { name: 'Add New Team' }).click();
+    await page.fill('#teamName', 'Edit Name Team');
+    await page.getByRole('button', { name: 'Create Team' }).click();
+    
+    // Should navigate to team view page
+    await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
+    
+    // Edit team name
+    const teamNameInput = page.getByLabel('Team Name');
+    await teamNameInput.clear();
+    await teamNameInput.fill('Updated Team Name');
+    
+    // Save changes
+    await page.getByRole('button', { name: 'Save Changes' }).click();
+    
+    // Verify updates are saved - should show the new name
+    await expect(page.getByLabel('Team Name')).toHaveValue('Updated Team Name');
   });
 });
 
