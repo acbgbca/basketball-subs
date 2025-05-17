@@ -14,18 +14,48 @@ describe('Team Operations', () => {
     jest.clearAllMocks();
   });
 
-  test('creates a new team', async () => {
+  test('creates a new team from modal', async () => {
+    const mockAddTeam = jest.spyOn(dbService, 'addTeam');
+    jest.spyOn(dbService, 'getTeams').mockResolvedValue([]);
+    
+    render(
+      <MemoryRouter>
+        <TeamList />
+      </MemoryRouter>
+    );
+
+    // Open the modal
+    await userEvent.click(screen.getByText('Add New Team'));
+    
+    // Fill out and submit the form
+    await userEvent.type(screen.getByLabelText('Team Name'), 'Test Team');
+    await userEvent.click(screen.getByText('Create Team'));
+
+    // Verify team was created with correct data
+    await waitFor(() => {
+      expect(mockAddTeam).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Test Team',
+          players: []
+        })
+      );
+    });
+  });
+
+  test('creates a new team from standalone page and navigates to team view', async () => {
     const mockAddTeam = jest.spyOn(dbService, 'addTeam');
     
     render(
       <MemoryRouter>
-        <TeamForm />
+        <Routes>
+          <Route path="/" element={<TeamForm />} />
+          <Route path="/teams/:id" element={<TeamView />} />
+        </Routes>
       </MemoryRouter>
     );
 
-    userEvent.type(screen.getByLabelText('Team Name'), 'Test Team');
-
-    userEvent.click(screen.getByText('Create Team'));
+    await userEvent.type(screen.getByLabelText('Team Name'), 'Test Team');
+    await userEvent.click(screen.getByText('Create Team'));
 
     await waitFor(() => {
       expect(mockAddTeam).toHaveBeenCalledWith(
@@ -136,7 +166,6 @@ describe('Team Operations', () => {
       name: 'Test Team', 
       players: []
     };
-    
     const mockUpdateTeam = jest.spyOn(dbService, 'updateTeam');
     jest.spyOn(dbService, 'getTeam').mockResolvedValue(mockTeam);
 

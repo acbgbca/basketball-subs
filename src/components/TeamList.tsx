@@ -3,10 +3,12 @@ import { Container, Row, Col, Card, Button, Modal } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { Team } from '../types';
 import { dbService } from '../services/db';
+import { TeamForm } from './TeamForm';
 
 export const TeamList: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showNewTeamModal, setShowNewTeamModal] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
 
   useEffect(() => {
@@ -35,14 +37,18 @@ export const TeamList: React.FC = () => {
     }
   };
 
+  const handleTeamCreated = (newTeam: Team) => {
+    setTeams([...teams, newTeam]);
+  };
+
   return (
     <Container>
       <Row className="mb-4">
         <Col>
           <h2>Teams</h2>
-          <Link to="/teams/new">
-            <Button variant="primary">Add New Team</Button>
-          </Link>
+          <Button variant="primary" onClick={() => setShowNewTeamModal(true)}>
+            Add New Team
+          </Button>
         </Col>
       </Row>
       <Row>
@@ -71,6 +77,20 @@ export const TeamList: React.FC = () => {
         ))}
       </Row>
 
+      {/* New Team Modal */}
+      <Modal show={showNewTeamModal} onHide={() => setShowNewTeamModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Create New Team</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <TeamForm 
+            isModal={true} 
+            onClose={() => setShowNewTeamModal(false)}
+            onTeamCreated={handleTeamCreated}
+          />
+        </Modal.Body>
+      </Modal>
+
       {/* Delete Confirmation Modal */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
         <Modal.Header closeButton>
@@ -95,4 +115,4 @@ export const TeamList: React.FC = () => {
       </Modal>
     </Container>
   );
-}; 
+};
