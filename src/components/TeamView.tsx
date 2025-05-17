@@ -138,18 +138,18 @@ export const TeamView: React.FC = () => {
               ))}
             </tbody>
           </Table>
-          <div className="d-flex justify-content-between mt-3">
+          <div className="d-flex flex-column flex-md-row justify-content-between mt-3 gap-3">
             <Button 
               variant="primary" 
               onClick={handleAddPlayer}
+              className="w-md-auto"
             >
               Add Player
             </Button>
-            <div>
+            <div className="d-flex gap-2 justify-content-end">
               <Button 
                 variant="secondary" 
                 onClick={handleCancel}
-                className="me-2"
               >
                 Cancel
               </Button>
@@ -157,7 +157,6 @@ export const TeamView: React.FC = () => {
                 variant="success" 
                 onClick={handleSave}
                 disabled={!hasChanges}
-                className="me-2"
               >
                 Save Changes
               </Button>
