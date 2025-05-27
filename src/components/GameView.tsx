@@ -644,14 +644,18 @@ export const GameView: React.FC = () => {
           <Modal.Title>Manage Substitutions</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {(activePlayers.size + subInPlayers.size - subOutPlayers.size) > 5 && (
-            <Alert variant="warning" data-testid="too-many-players-warning">
-              You have selected too many players. Only 5 players can be on the court.
-            </Alert>
-          )}
           <Row>
             <Col>
-              <h5>On Court ({activePlayers.size + subInPlayers.size - subOutPlayers.size})</h5>
+              <h5>
+                On Court&nbsp;
+                <Badge bg={
+                  activePlayers.size + subInPlayers.size - subOutPlayers.size === 5 ? "success" :
+                  activePlayers.size + subInPlayers.size - subOutPlayers.size > 5 ? "danger" :
+                  "primary"
+                }>
+                  {activePlayers.size + subInPlayers.size - subOutPlayers.size}
+                </Badge>
+              </h5>
               {Array.from(activePlayers).map(playerId => {
                 const player = game.players.find(p => p.id === playerId);
                 return player ? (
