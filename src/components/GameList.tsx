@@ -12,7 +12,16 @@ export const GameList: React.FC = () => {
   useEffect(() => {
     const loadGames = async () => {
       const gamesData = await dbService.getGames();
-      setGames(gamesData);
+      const sortedGames = [...gamesData].sort((a, b) => {
+        // First sort by date (newest first)
+        const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
+        // If dates are equal, sort by team name
+        if (dateComparison === 0) {
+          return a.team.name.localeCompare(b.team.name);
+        }
+        return dateComparison;
+      });
+      setGames(sortedGames);
     };
     loadGames();
   }, []);
@@ -86,7 +95,7 @@ export const GameList: React.FC = () => {
         </Modal.Header>
         <Modal.Body>
           Are you sure you want to delete the game for {gameToDelete?.team.name} on{' '}
-          {gameToDelete && new Date(gameToDelete.date).toLocaleDateString()}?
+          {gameToDelete?.date ? new Date(gameToDelete.date).toLocaleDateString() : ''}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
