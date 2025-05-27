@@ -663,7 +663,7 @@ export const GameView: React.FC = () => {
                   >
                     <span>{player.name}</span>
                     <span className={`badge ${subOutPlayers.has(player.id) ? "bg-secondary" : "bg-danger"}`}>
-                      {subOutPlayers.has(player.id) ? "Cancel Out" : "Out"}
+                      {subOutPlayers.has(player.id) ? "Sub" : "Out"}
                     </span>
                   </Button>
                 ) : null;
@@ -680,7 +680,7 @@ export const GameView: React.FC = () => {
                 >
                   <span>{player.name}</span>
                   <span className={`badge ${subInPlayers.has(player.id) ? "bg-secondary" : "bg-success"}`}>
-                    {subInPlayers.has(player.id) ? "Cancel In" : "In"}
+                    {subInPlayers.has(player.id) ? "Sub" : "In"}
                   </span>
                 </Button>
               ))}
