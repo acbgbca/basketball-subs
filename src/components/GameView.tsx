@@ -142,6 +142,23 @@ export const GameView: React.FC = () => {
     }, 0);
   };
 
+  const calculatePlayerSubTime = (playerId: string): number | null => {
+    if (!game) return null;
+    const currentPeriodData = game.periods[currentPeriod];
+    const lastSub = currentPeriodData.substitutions
+      .filter(sub => sub.player.id === playerId)
+      .sort((a, b) => (a.timeIn || 0) - (b.timeIn || 0))[0];
+    
+    if (!lastSub) return null;
+    
+    if (activePlayers.has(playerId)) {
+      return lastSub.timeIn;
+    } else if (lastSub.timeOut !== null) {
+      return lastSub.timeOut;
+    }
+    return null;
+  };
+
   const calculatePeriodFouls = (): number => {
     if (!game) return 0;
     return game.periods[currentPeriod].fouls?.length || 0;
@@ -503,7 +520,15 @@ export const GameView: React.FC = () => {
                 <tr key={player.id} data-testid={`player-${player.number}`}>
                   <td>{player.number}</td>
                   <td>{player.name}</td>
-                  <td>{formatTime(calculatePlayerMinutes(player.id))}</td>
+                  <td>
+                    <div>{formatTime(calculatePlayerMinutes(player.id))}</div>
+                    <div className="text-muted small">
+                      {(() => {
+                        const subTime = calculatePlayerSubTime(player.id);
+                        return subTime !== null ? formatTime(subTime) : '';
+                      })()}
+                    </div>
+                  </td>
                   <td>{calculatePlayerFouls(player.id)}</td>
                   <td>
                     <Badge bg={activePlayers.has(player.id) ? "success" : "secondary"}>
