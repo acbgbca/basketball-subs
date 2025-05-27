@@ -125,7 +125,8 @@ export const GameView: React.FC = () => {
 
   const calculatePlayerMinutes = (playerId: string): number => {
     if (!game) return 0;
-    return game.periods.reduce((total, period) => {
+    // Calculate completed substitution time
+    const completedTime = game.periods.reduce((total, period) => {
       const playerSubs = period.substitutions.filter(sub => 
         sub.player.id === playerId && sub.secondsPlayed !== null
       );
@@ -133,6 +134,17 @@ export const GameView: React.FC = () => {
         subTotal + (sub.secondsPlayed || 0), 0
       );
     }, 0);
+
+    // If player is active, add current active time
+    if (activePlayers.has(playerId)) {
+      const subInTime = calculatePlayerSubTime(playerId);
+      if (subInTime !== null) {
+        // Add time from sub-in until now
+        return completedTime + (subInTime - timeRemaining);
+      }
+    }
+    
+    return completedTime;
   };
 
   const calculatePlayerFouls = (playerId: string): number => {
@@ -140,6 +152,23 @@ export const GameView: React.FC = () => {
     return game.periods.reduce((total, period) => {
       return total + period.fouls.filter(foul => foul.player.id === playerId).length;
     }, 0);
+  };
+
+  const calculatePlayerSubTime = (playerId: string): number | null => {
+    if (!game) return null;
+    const currentPeriodData = game.periods[currentPeriod];
+    const lastSub = currentPeriodData.substitutions
+      .filter(sub => sub.player.id === playerId)
+      .sort((a, b) => (a.timeIn || 0) - (b.timeIn || 0))[0];
+    
+    if (!lastSub) return null;
+    
+    if (activePlayers.has(playerId)) {
+      return lastSub.timeIn;
+    } else if (lastSub.timeOut !== null) {
+      return lastSub.timeOut;
+    }
+    return null;
   };
 
   const calculatePeriodFouls = (): number => {
@@ -503,7 +532,15 @@ export const GameView: React.FC = () => {
                 <tr key={player.id} data-testid={`player-${player.number}`}>
                   <td>{player.number}</td>
                   <td>{player.name}</td>
-                  <td>{formatTime(calculatePlayerMinutes(player.id))}</td>
+                  <td>
+                    <div>{formatTime(calculatePlayerMinutes(player.id))}</div>
+                    <div className="text-muted small">
+                      {(() => {
+                        const subTime = calculatePlayerSubTime(player.id);
+                        return subTime !== null ? formatTime(subTime) : '';
+                      })()}
+                    </div>
+                  </td>
                   <td>{calculatePlayerFouls(player.id)}</td>
                   <td>
                     <Badge bg={activePlayers.has(player.id) ? "success" : "secondary"}>
@@ -644,14 +681,18 @@ export const GameView: React.FC = () => {
           <Modal.Title>Manage Substitutions</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {(activePlayers.size + subInPlayers.size - subOutPlayers.size) > 5 && (
-            <Alert variant="warning" data-testid="too-many-players-warning">
-              You have selected too many players. Only 5 players can be on the court.
-            </Alert>
-          )}
           <Row>
             <Col>
-              <h5>On Court ({activePlayers.size + subInPlayers.size - subOutPlayers.size})</h5>
+              <h5>
+                On Court&nbsp;
+                <Badge bg={
+                  activePlayers.size + subInPlayers.size - subOutPlayers.size === 5 ? "success" :
+                  activePlayers.size + subInPlayers.size - subOutPlayers.size > 5 ? "danger" :
+                  "primary"
+                }>
+                  {activePlayers.size + subInPlayers.size - subOutPlayers.size}
+                </Badge>
+              </h5>
               {Array.from(activePlayers).map(playerId => {
                 const player = game.players.find(p => p.id === playerId);
                 return player ? (
@@ -663,7 +704,7 @@ export const GameView: React.FC = () => {
                   >
                     <span>{player.name}</span>
                     <span className={`badge ${subOutPlayers.has(player.id) ? "bg-secondary" : "bg-danger"}`}>
-                      {subOutPlayers.has(player.id) ? "Cancel Out" : "Out"}
+                      {subOutPlayers.has(player.id) ? "Sub" : "Out"}
                     </span>
                   </Button>
                 ) : null;
@@ -680,7 +721,7 @@ export const GameView: React.FC = () => {
                 >
                   <span>{player.name}</span>
                   <span className={`badge ${subInPlayers.has(player.id) ? "bg-secondary" : "bg-success"}`}>
-                    {subInPlayers.has(player.id) ? "Cancel In" : "In"}
+                    {subInPlayers.has(player.id) ? "Sub" : "In"}
                   </span>
                 </Button>
               ))}

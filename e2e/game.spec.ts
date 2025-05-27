@@ -215,12 +215,11 @@ test.describe('Game Management', () => {
       await page.getByRole('button', { name: `Max Player ${i} In` }).click();
     }
 
-    // Verify warning is shown and done button is disabled
-    await expect(page.getByTestId('too-many-players-warning')).toBeVisible();
+    // Verify done button is disabled
     await expect(page.getByTestId('sub-modal-done')).toBeDisabled();
 
     // Deselect one player
-    await page.getByRole('button', { name: 'Max Player 6 Cancel In' }).click();
+    await page.getByRole('button', { name: 'Max Player 6 Sub' }).click();
 
     // Verify warning is gone and done button is enabled
     await expect(page.getByTestId('too-many-players-warning')).not.toBeVisible();

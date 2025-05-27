@@ -14,7 +14,7 @@ export const TeamList: React.FC = () => {
   useEffect(() => {
     const loadTeams = async () => {
       const teamsData = await dbService.getTeams();
-      setTeams(teamsData);
+      setTeams(teamsData.sort((a, b) => a.name.localeCompare(b.name)));
     };
     loadTeams();
   }, []);
@@ -38,7 +38,7 @@ export const TeamList: React.FC = () => {
   };
 
   const handleTeamCreated = (newTeam: Team) => {
-    setTeams([...teams, newTeam]);
+    setTeams([...teams, newTeam].sort((a, b) => a.name.localeCompare(b.name)));
   };
 
   return (
