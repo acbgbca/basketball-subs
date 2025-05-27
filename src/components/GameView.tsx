@@ -125,7 +125,8 @@ export const GameView: React.FC = () => {
 
   const calculatePlayerMinutes = (playerId: string): number => {
     if (!game) return 0;
-    return game.periods.reduce((total, period) => {
+    // Calculate completed substitution time
+    const completedTime = game.periods.reduce((total, period) => {
       const playerSubs = period.substitutions.filter(sub => 
         sub.player.id === playerId && sub.secondsPlayed !== null
       );
@@ -133,6 +134,17 @@ export const GameView: React.FC = () => {
         subTotal + (sub.secondsPlayed || 0), 0
       );
     }, 0);
+
+    // If player is active, add current active time
+    if (activePlayers.has(playerId)) {
+      const subInTime = calculatePlayerSubTime(playerId);
+      if (subInTime !== null) {
+        // Add time from sub-in until now
+        return completedTime + (subInTime - timeRemaining);
+      }
+    }
+    
+    return completedTime;
   };
 
   const calculatePlayerFouls = (playerId: string): number => {
