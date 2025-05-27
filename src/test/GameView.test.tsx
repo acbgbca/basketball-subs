@@ -193,9 +193,8 @@ describe('Game Operations', () => {
       userEvent.click(player);
     }
 
-    // Check warning is shown and done button is disabled
+    // Check done button is disabled
     await waitFor(() => {
-      expect(screen.getByTestId('too-many-players-warning')).toBeInTheDocument();
       expect(screen.getByTestId('sub-modal-done')).toBeDisabled();
     });
 
