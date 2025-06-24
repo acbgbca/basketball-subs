@@ -79,7 +79,7 @@ export const TeamView: React.FC = (): ReactElement => {
     navigate('/teams');
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
     if (!team) return;
     
     const url = createShareUrl({
@@ -90,14 +90,9 @@ export const TeamView: React.FC = (): ReactElement => {
       }))
     });
     
-    setShareUrl(url);
-  };
-
-  const handleCopy = async () => {
-    if (!shareUrl) return;
-    
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(url);
+      setShareUrl(url);
       setShowCopySuccess(true);
       setTimeout(() => setShowCopySuccess(false), 2000);
     } catch (error) {
@@ -207,29 +202,13 @@ export const TeamView: React.FC = (): ReactElement => {
                   Share Team
                 </Button>
               </div>
-              {shareUrl && (
-                <div className="d-flex flex-column gap-2">
-                  <InputGroup>
-                    <Form.Control
-                      type="text"
-                      value={shareUrl}
-                      readOnly
-                      data-testid="share-url-input"
-                      onClick={(e) => (e.target as HTMLInputElement).select()}
-                    />
-                    <Button variant="outline-secondary" onClick={handleCopy}>
-                      Copy
-                    </Button>
-                  </InputGroup>
-                  {showCopySuccess && (
-                    <Alert variant="success" className="py-2 mb-0">
-                      URL copied to clipboard!
-                    </Alert>
-                  )}
-                </div>
-              )}
             </div>
           </div>
+          {showCopySuccess && (
+            <Alert variant="success" className="py-2 mb-0">
+              Team URL copied to clipboard!
+            </Alert>
+          )}
         </Col>
       </Row>
     </Container>

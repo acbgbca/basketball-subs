@@ -1,7 +1,13 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Team Sharing', () => {
-  test('should share team and verify pre-filled data', async ({ context }) => {
+  test('should share team and verify pre-filled data', async ({ context, browserName }) => {
+
+    test.skip(browserName.toLowerCase() !== 'chromium', `Browser does not support clipboard read`);
+
+    // Grant clipboard permissions for the test
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+
     // Create a new browser context for handling clipboard permissions
     const page = await context.newPage();
     await page.goto('/#/teams');
@@ -34,12 +40,9 @@ test.describe('Team Sharing', () => {
     // Click share button
     await page.getByRole('button', { name: 'Share Team' }).click();
     
-    // Verify share URL is displayed
-    const urlInput = page.getByTestId('share-url-input');
-    await expect(urlInput).toBeVisible();
-    
     // Get the share URL
-    const shareUrl = await urlInput.inputValue();
+    const handle = await page.evaluateHandle(() => navigator.clipboard.readText());
+    const shareUrl = await handle.jsonValue();
     
     // Open the share URL in a new page
     const newPage = await context.newPage();
@@ -77,11 +80,8 @@ test.describe('Team Sharing', () => {
     // Click share button
     await page.getByRole('button', { name: 'Share Team' }).click();
     
-    // Click copy button
-    await page.getByRole('button', { name: 'Copy' }).click();
-    
     // Verify success message appears
-    const successMessage = page.getByText('URL copied to clipboard!');
+    const successMessage = page.getByText('Team URL copied to clipboard!');
     await expect(successMessage).toBeVisible();
     
     // Verify message disappears
