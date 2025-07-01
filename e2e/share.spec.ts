@@ -65,7 +65,13 @@ test.describe('Team Sharing', () => {
     await expect(dataRows[1].getByRole('textbox').nth(1)).toHaveValue('Test Player 2');
   });
 
-  test('should show success message when copying share URL', async ({ context }) => {
+  test('should show success message when copying share URL', async ({ context, browserName }) => {
+
+    if (browserName.toLowerCase() == 'chromium') {
+      // Grant clipboard permissions for the test
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    }
+
     const page = await context.newPage();
     await page.goto('/#/teams');
     
