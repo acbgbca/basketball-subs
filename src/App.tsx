@@ -28,6 +28,7 @@ function App() {
         <Routes>
           <Route path="/" element={<GameList />} />
           <Route path="/teams" element={<TeamList />} />
+          <Route path="/teams/new" element={<TeamForm />} />
           <Route path="/games" element={<GameList />} />
           <Route path="/games/new" element={<GameForm />} />
           <Route path="/games/:id" element={<GameView />} />

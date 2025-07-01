@@ -1,17 +1,20 @@
-import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Button, Table, Form } from 'react-bootstrap';
+import React, { useEffect, useState, ReactElement } from 'react';
+import { Container, Row, Col, Button, Table, Form, InputGroup, Alert } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { Team, Player } from '../types';
 import { dbService } from '../services/db';
+import { createShareUrl } from '../utils/shareTeam';
 
-export const TeamView: React.FC = () => {
+export const TeamView: React.FC = (): ReactElement => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [team, setTeam] = useState<Team | null>(null);
   const [editedPlayers, setEditedPlayers] = useState<Player[]>([]);
   const [editedTeamName, setEditedTeamName] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [showCopySuccess, setShowCopySuccess] = useState(false);
 
   useEffect(() => {
     const loadTeam = async () => {
@@ -74,6 +77,27 @@ export const TeamView: React.FC = () => {
 
   const handleDone = () => {
     navigate('/teams');
+  };
+
+  const handleShare = async () => {
+    if (!team) return;
+    
+    const url = createShareUrl({
+      name: team.name,
+      players: team.players.map(p => ({
+        number: p.number,
+        name: p.name
+      }))
+    });
+    
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareUrl(url);
+      setShowCopySuccess(true);
+      setTimeout(() => setShowCopySuccess(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy share URL:', error);
+    }
   };
 
   if (!team) return <div>Loading...</div>;
@@ -150,28 +174,41 @@ export const TeamView: React.FC = () => {
             >
               Add Player
             </Button>
-            <div className="d-flex gap-2 justify-content-end">
-              <Button 
-                variant="secondary" 
-                onClick={handleCancel}
-              >
-                Cancel
-              </Button>
-              <Button 
-                variant="success" 
-                onClick={handleSave}
-                disabled={!hasChanges}
-              >
-                Save Changes
-              </Button>
-              <Button 
-                variant="primary" 
-                onClick={handleDone}
-              >
-                Done
-              </Button>
+            <div className="d-flex flex-column gap-2">
+              <div className="d-flex gap-2 justify-content-end">
+                <Button 
+                  variant="secondary" 
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  variant="success" 
+                  onClick={handleSave}
+                  disabled={!hasChanges}
+                >
+                  Save Changes
+                </Button>
+                <Button 
+                  variant="primary" 
+                  onClick={handleDone}
+                >
+                  Done
+                </Button>
+                <Button
+                  variant="outline-primary"
+                  onClick={handleShare}
+                >
+                  Share Team
+                </Button>
+              </div>
             </div>
           </div>
+          {showCopySuccess && (
+            <Alert variant="success" className="py-2 mb-0">
+              Team URL copied to clipboard!
+            </Alert>
+          )}
         </Col>
       </Row>
     </Container>
