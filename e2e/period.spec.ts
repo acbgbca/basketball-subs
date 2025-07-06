@@ -102,6 +102,6 @@ test.describe('Period Management', () => {
     await page.getByTestId('end-period-modal').getByRole('button', { name: 'End Period' }).click();
     
     // Check player stats in the new period
-    await expect(page.getByText('Test Player').locator('..').getByText('10:00')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Test Player').locator('..').getByRole('cell', { name: '10:00', exact: true})).toBeVisible();
   });
 });
