@@ -1,5 +1,8 @@
 This project is a PWA built with React and Typescript, and the HashRouter for managing page navigation.
 
+The following documentation explains the application in greater detail:
+* docs/model.md - The data model used in the application
+
 When you are being asked to make a change:
 * First plan out the change that you want to make. Present it to me and confirm whether to continue.
 * Break the plan into smaller self contained parts.
