@@ -4,6 +4,18 @@ import { useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { Game, Substitution, Foul } from '../types';
 import { dbService } from '../services/db';
+import {
+  formatTime,
+  calculatePlayerMinutes,
+  calculatePlayerFouls,
+  calculatePlayerSubTime,
+  calculatePeriodFouls,
+  endPeriod,
+  deleteSubstitution,
+  editSubstitution,
+  subModalSubmit,
+  addFoul
+} from '../services/gameService';
 
 export const GameView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -117,97 +129,9 @@ export const GameView: React.FC = () => {
     };
   }, [isRunning]);
 
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const calculatePlayerMinutes = (playerId: string): number => {
-    if (!game) return 0;
-    // Calculate completed substitution time
-    const completedTime = game.periods.reduce((total, period) => {
-      const playerSubs = period.substitutions.filter(sub => 
-        sub.player.id === playerId && sub.secondsPlayed !== null
-      );
-      return total + playerSubs.reduce((subTotal, sub) => 
-        subTotal + (sub.secondsPlayed || 0), 0
-      );
-    }, 0);
-
-    // If player is active, add current active time
-    if (activePlayers.has(playerId)) {
-      const subInTime = calculatePlayerSubTime(playerId);
-      if (subInTime !== null) {
-        // Add time from sub-in until now
-        return completedTime + (subInTime - timeRemaining);
-      }
-    }
-    
-    return completedTime;
-  };
-
-  const calculatePlayerFouls = (playerId: string): number => {
-    if (!game) return 0;
-    return game.periods.reduce((total, period) => {
-      return total + period.fouls.filter(foul => foul.player.id === playerId).length;
-    }, 0);
-  };
-
-  const calculatePlayerSubTime = (playerId: string): number | null => {
-    if (!game) return null;
-    const currentPeriodData = game.periods[currentPeriod];
-    const lastSub = currentPeriodData.substitutions
-      .filter(sub => sub.player.id === playerId)
-      .sort((a, b) => (a.timeIn || 0) - (b.timeIn || 0))[0];
-    
-    if (!lastSub) return null;
-    
-    if (activePlayers.has(playerId)) {
-      return lastSub.timeIn;
-    } else if (lastSub.timeOut !== null) {
-      return lastSub.timeOut;
-    }
-    return null;
-  };
-
-  const calculatePeriodFouls = (): number => {
-    if (!game) return 0;
-    return game.periods[currentPeriod].fouls?.length || 0;
-  };
-
   const handleEndPeriod = async () => {
     if (!game) return;
-
-    // Sub out all active players with timeOut = 0
-    const promises = Array.from(activePlayers).map(playerId => {
-      const player = game.players.find(p => p.id === playerId);
-      if (player) {
-        const currentPeriodData = game.periods[currentPeriod];
-        const activeSub = currentPeriodData.substitutions.find(
-          sub => sub.player.id === player.id && sub.timeOut === null
-        );
-
-        if (activeSub) {
-          const updatedSub: Substitution = {
-            ...activeSub,
-            timeOut: 0,
-            secondsPlayed: activeSub.timeIn
-          };
-
-          const updatedPeriods = [...game.periods];
-          updatedPeriods[currentPeriod].substitutions = currentPeriodData.substitutions.map(
-            sub => sub.id === activeSub.id ? updatedSub : sub
-          );
-
-          return dbService.updateGame({ ...game, periods: updatedPeriods });
-        }
-      }
-      return Promise.resolve();
-    });
-
-    await Promise.all(promises);
-
+    const updatedGame = await endPeriod(game, activePlayers, currentPeriod);
     setIsRunning(false);
     if (currentPeriod < game.periods.length - 1) {
       setCurrentPeriod(prev => prev + 1);
@@ -217,108 +141,75 @@ export const GameView: React.FC = () => {
     }
     setActivePlayers(new Set());
     setShowEndPeriodModal(false);
+    setGame(updatedGame);
   };
 
   const handleDeleteSubstitution = async (subToDelete: Substitution) => {
     if (!game) return;
-
-    const updatedPeriods = [...game.periods];
-    updatedPeriods[currentPeriod].substitutions = 
-      updatedPeriods[currentPeriod].substitutions.filter(sub => sub.id !== subToDelete.id);
-
-    const updatedGame = { ...game, periods: updatedPeriods };
-    await dbService.updateGame(updatedGame);
+    const updatedGame = await deleteSubstitution(game, currentPeriod, subToDelete);
     setGame(updatedGame);
   };
 
   const handleEditSubstitution = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!game || !selectedSub) return;
-
-    const updatedSub: Substitution = {
-      ...selectedSub,
-      timeIn: editForm.timeIn,
-      timeOut: editForm.timeOut,
-      secondsPlayed: (editForm.timeIn - editForm.timeOut)
-    };
-
-    const updatedPeriods = [...game.periods];
-    updatedPeriods[currentPeriod].substitutions = 
-      updatedPeriods[currentPeriod].substitutions.map(sub => 
-        sub.id === selectedSub.id ? updatedSub : sub
-      );
-
-    const updatedGame = { ...game, periods: updatedPeriods };
-    await dbService.updateGame(updatedGame);
+    const updatedGame = await editSubstitution(game, currentPeriod, selectedSub, editForm.timeIn, editForm.timeOut);
     setGame(updatedGame);
     setShowEditSubModal(false);
   };
 
   const handleSubModalSubmit = async () => {
     if (!game) return;
-  
-    const newActivePlayers = new Set(activePlayers);
-    const currentPeriodData = game.periods[currentPeriod];
-  
-    // Handle Sub Out
-    for (const playerId of subOutPlayers) {
-      const player = game.players.find(p => p.id === playerId);
-      if (player) {
-        const activeSub = currentPeriodData.substitutions.find(
-          sub => sub.player.id === player.id && sub.timeOut === null
-        );
-  
-        if (activeSub) {
-          const updatedSub: Substitution = {
-            ...activeSub,
-            timeOut: timeRemaining,
-            secondsPlayed: (activeSub.timeIn - timeRemaining)
-          };
-  
-          const updatedPeriods = [...game.periods];
-          updatedPeriods[currentPeriod].substitutions = currentPeriodData.substitutions.map(
-            sub => sub.id === activeSub.id ? updatedSub : sub
-          );
-  
-          const updatedGame = { ...game, periods: updatedPeriods };
-          await dbService.updateGame(updatedGame);
-          setGame(updatedGame);
-  
-          newActivePlayers.delete(player.id);
-        }
-      }
-    }
-  
-    // Handle Sub In
-    for (const playerId of subInPlayers) {
-      const player = game.players.find(p => p.id === playerId);
-      if (player) {
-        const newSub: Substitution = {
-          id: uuidv4(),
-          player,
-          timeIn: timeRemaining,
-          timeOut: null,
-          secondsPlayed: null,
-          periodId: currentPeriodData.id
-        };
-  
-        const updatedPeriods = [...game.periods];
-        updatedPeriods[currentPeriod].substitutions.push(newSub);
-  
-        const updatedGame = { ...game, periods: updatedPeriods };
-        await dbService.updateGame(updatedGame);
-        setGame(updatedGame);
-  
-        newActivePlayers.add(player.id);
-      }
-    }
-  
+    const { updatedGame, newActivePlayers } = await subModalSubmit(
+      game,
+      currentPeriod,
+      activePlayers,
+      subInPlayers,
+      subOutPlayers,
+      timeRemaining
+    );
+    setGame(updatedGame);
     setActivePlayers(newActivePlayers);
     setShowSubModal(false);
     setSubInPlayers(new Set());
     setSubOutPlayers(new Set());
   };
   
+  const handleFoulConfirm = async () => {
+    if (!game || !selectedFoulPlayerId) return;
+    const updatedGame = await addFoul(game, currentPeriod, selectedFoulPlayerId, timeRemaining);
+    setGame(updatedGame);
+    setShowFoulModal(false);
+    setSelectedFoulPlayerId(null);
+  };
+
+  const handleFoulModalClose = () => {
+    setShowFoulModal(false);
+    setSelectedFoulPlayerId(null);
+  };
+
+  // Restore missing handler for time adjustment
+  const handleTimeAdjustment = (seconds: number) => {
+    const newTime = Math.max(0, timeRemaining + seconds);
+    setTimeRemaining(newTime);
+    if (isRunning) {
+      baseTimeRef.current = {
+        startTime: Date.now(),
+        initialRemaining: newTime
+      };
+    }
+    // If the clock is running, we need to adjust the game's periodStartTime
+    if (isRunning && game) {
+      const updatedGame = {
+        ...game,
+        periodStartTime: Date.now() - ((game.periods[currentPeriod].length * 60) - newTime) * 1000
+      };
+      dbService.updateGame(updatedGame);
+      setGame(updatedGame);
+    }
+  };
+
+  // Restore missing handler for sub button click
   const handleSubButtonClick = (playerId: string, action: 'in' | 'out') => {
     if (action === 'in') {
       setSubInPlayers(prev => {
@@ -353,64 +244,12 @@ export const GameView: React.FC = () => {
     }
   };
 
-  const handleTimeAdjustment = (seconds: number) => {
-    const newTime = Math.max(0, timeRemaining + seconds);
-    setTimeRemaining(newTime);
-    
-    if (isRunning) {
-      baseTimeRef.current = {
-        startTime: Date.now(),
-        initialRemaining: newTime
-      };
-    }
-    
-    // If the clock is running, we need to adjust the game's periodStartTime
-    if (isRunning && game) {
-      const updatedGame = {
-        ...game,
-        periodStartTime: Date.now() - ((game.periods[currentPeriod].length * 60) - newTime) * 1000
-      };
-      dbService.updateGame(updatedGame);
-      setGame(updatedGame);
-    }
-  };
-
+  // Restore missing handler for foul player click
   const handleFoulPlayerClick = (playerId: string) => {
     const player = game?.players.find(p => p.id === playerId);
     if (player) {
       setSelectedFoulPlayerId(player.id);
     }
-  };
-
-  const handleFoulConfirm = async () => {
-    if (!game || !selectedFoulPlayerId) return;
-    
-    const player = game.players.find(p => p.id === selectedFoulPlayerId);
-    if (!player) return;
-
-    const newFoul: Foul = {
-      id: uuidv4(),
-      player,
-      periodId: game.periods[currentPeriod].id,
-      timeRemaining
-    };
-
-    const updatedPeriods = [...game.periods];
-    if (!updatedPeriods[currentPeriod].fouls) {
-      updatedPeriods[currentPeriod].fouls = [];
-    }
-    updatedPeriods[currentPeriod].fouls.push(newFoul);
-
-    const updatedGame = { ...game, periods: updatedPeriods };
-    await dbService.updateGame(updatedGame);
-    setGame(updatedGame);
-    setShowFoulModal(false);
-    setSelectedFoulPlayerId(null);
-  };
-
-  const handleFoulModalClose = () => {
-    setShowFoulModal(false);
-    setSelectedFoulPlayerId(null);
   };
 
   if (!game) return <div>Loading...</div>;
@@ -424,7 +263,7 @@ export const GameView: React.FC = () => {
           <div className="d-flex align-items-center">
             <h3 className="mb-0 me-2" data-testid="period-display">Period {currentPeriod + 1}</h3>
             <Badge bg="danger" data-testid="period-fouls">
-              {calculatePeriodFouls()} fouls
+              {calculatePeriodFouls(game, currentPeriod)} fouls
             </Badge>
           </div>
           <div className="clock-display">
@@ -533,15 +372,15 @@ export const GameView: React.FC = () => {
                   <td>{player.number}</td>
                   <td>{player.name}</td>
                   <td>
-                    <div>{formatTime(calculatePlayerMinutes(player.id))}</div>
+                    <div>{formatTime(calculatePlayerMinutes(game, player.id, activePlayers, timeRemaining, currentPeriod))}</div>
                     <div className="text-muted small">
                       {(() => {
-                        const subTime = calculatePlayerSubTime(player.id);
+                        const subTime = calculatePlayerSubTime(game, player.id, currentPeriod, activePlayers);
                         return subTime !== null ? formatTime(subTime) : '';
                       })()}
                     </div>
                   </td>
-                  <td>{calculatePlayerFouls(player.id)}</td>
+                  <td>{calculatePlayerFouls(game, player.id)}</td>
                   <td>
                     <Badge bg={activePlayers.has(player.id) ? "success" : "secondary"}>
                       {activePlayers.has(player.id) ? "Court" : "Bench"}
@@ -761,7 +600,7 @@ export const GameView: React.FC = () => {
                 onClick={() => handleFoulPlayerClick(player.id)}
               >
                 <span>{player.number} - {player.name}</span>
-                <Badge bg="danger">{calculatePlayerFouls(player.id)} fouls</Badge>
+                <Badge bg="danger">{calculatePlayerFouls(game, player.id)} fouls</Badge>
               </Button>
             ))}
           {Array.from(activePlayers).length === 0 && (

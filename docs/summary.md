@@ -14,6 +14,7 @@ Basketball Subs is a Progressive Web Application (PWA) built with React and Type
 - **Statistics**: View player minutes, fouls, substitution history, and period-by-period stats.
 - **Export/Share**: Teams and game data can be exported or shared.
 - **Testing**: Comprehensive unit and end-to-end tests using Jest and Playwright.
+- **Service Layer Architecture**: Core game logic (calculations and mutations) is implemented in a dedicated service layer (`src/services/gameService.ts`). This improves maintainability, testability, and separation of concerns between UI and business logic.
 
 ## Data Model (Summary)
 
@@ -32,6 +33,7 @@ Basketball Subs is a Progressive Web Application (PWA) built with React and Type
 - **Testing**: Jest (unit), Playwright (e2e)
 - **Build**: Webpack, Babel
 - **PWA**: Service worker, manifest, offline support
+- **Service Layer**: Game logic and calculations are handled in `src/services/gameService.ts`.
 
 ## Navigation Structure
 
@@ -57,6 +59,7 @@ Basketball Subs is a Progressive Web Application (PWA) built with React and Type
 
 - Data model and relationships are documented in `docs/model.md`
 - User and developer instructions are in `README.md`
+- Service layer logic is documented in `src/services/gameService.ts`
 
 ---
 
