@@ -1,10 +1,9 @@
 This project is a PWA built with React and Typescript, and the HashRouter for managing page navigation.
 
-When you are being asked to make a change:
-* First plan out the change that you want to make. Present it to me and confirm whether to continue.
-* Break the plan into smaller self contained parts.
-* Make one change at a time. Make sure it works with test coverage before moving onto the next part.
-* If the tests fail, you may make one attempt to fix them. If you fail you will revert the change you made to fix the test, and ask me to investigate and tell you why the test is failing
+The following documentation explains the application in greater detail:
+* docs/summary.md - A summary of the application, its features, and technical stack
+* docs/model.md - The data model used in the application
 
-When updating the tests:
-* Never increase the timeout for rendering a component. If the component doesn't render in time, then something is wrong
+When making a change, ensure the documentation under docs is updated to reflect the change.
+
+When following instructions in an ai.md file, mark each step as complete by adding a `- [x]` to the start of the line. This will help you keep track of what has been done. Do not complete tasks that have already been completed.
