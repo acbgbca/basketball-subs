@@ -15,6 +15,14 @@ Basketball Subs is a Progressive Web Application (PWA) built with React and Type
 - **Export/Share**: Teams and game data can be exported or shared.
 - **Testing**: Comprehensive unit and end-to-end tests using Jest and Playwright.
 - **Service Layer Architecture**: Core game logic (calculations and mutations) is implemented in a dedicated service layer (`src/services/gameService.ts`). This improves maintainability, testability, and separation of concerns between UI and business logic.
+- **Modular UI Architecture**: The main game view (`GameView.tsx`) is now fully modular, with the following major UI sections and dialogs extracted into their own files:
+  - `GameHeader.tsx`: Header, clock, and control buttons
+  - `PlayerTable.tsx`: Player list and stats
+  - `SubstitutionTable.tsx`: Substitution list and actions
+  - `modals/EditSubstitutionModal.tsx`: Edit substitution dialog
+  - `modals/EndPeriodModal.tsx`: End period confirmation dialog
+  - `modals/SubstitutionModal.tsx`: Manage substitutions dialog
+  - `modals/FoulModal.tsx`: Record foul dialog
 
 ## Data Model (Summary)
 
@@ -34,6 +42,7 @@ Basketball Subs is a Progressive Web Application (PWA) built with React and Type
 - **Build**: Webpack, Babel
 - **PWA**: Service worker, manifest, offline support
 - **Service Layer**: Game logic and calculations are handled in `src/services/gameService.ts`.
+- **Component Structure**: Main game UI is split into modular components for maintainability and clarity.
 
 ## Navigation Structure
 
@@ -60,6 +69,7 @@ Basketball Subs is a Progressive Web Application (PWA) built with React and Type
 - Data model and relationships are documented in `docs/model.md`
 - User and developer instructions are in `README.md`
 - Service layer logic is documented in `src/services/gameService.ts`
+- UI component structure and modularization are reflected in this summary
 
 ---
 
