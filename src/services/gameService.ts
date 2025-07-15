@@ -23,9 +23,10 @@ interface GameService {
 }
 
 export const gameService:GameService = {
-  getGame(id: string) {
+  async getGame(id: string):Promise<Game> {
     return dbService.getGame(id);
   },
+  
   async updateGame(game: Game): Promise<void> {
     return dbService.updateGame(game);
   },

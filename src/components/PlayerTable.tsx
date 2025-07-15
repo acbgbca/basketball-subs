@@ -1,16 +1,13 @@
 import React from 'react';
 import { Table, Badge } from 'react-bootstrap';
 import { Game } from '../types';
+import { gameService } from '../services/gameService';
 
 interface PlayerTableProps {
   game: Game;
   activePlayers: Set<string>;
   currentPeriod: number;
   timeRemaining: number;
-  formatTime: (seconds: number) => string;
-  calculatePlayerMinutes: (game: Game, playerId: string, activePlayers: Set<string>, timeRemaining: number, currentPeriod: number) => number;
-  calculatePlayerSubTime: (game: Game, playerId: string, currentPeriod: number, activePlayers: Set<string>) => number | null;
-  calculatePlayerFouls: (game: Game, playerId: string) => number;
 }
 
 const PlayerTable: React.FC<PlayerTableProps> = ({
@@ -18,10 +15,6 @@ const PlayerTable: React.FC<PlayerTableProps> = ({
   activePlayers,
   currentPeriod,
   timeRemaining,
-  formatTime,
-  calculatePlayerMinutes,
-  calculatePlayerSubTime,
-  calculatePlayerFouls
 }) => (
   <>
     <h4>Players</h4>
@@ -52,15 +45,15 @@ const PlayerTable: React.FC<PlayerTableProps> = ({
               <td>{player.number}</td>
               <td>{player.name}</td>
               <td>
-                <div>{formatTime(calculatePlayerMinutes(game, player.id, activePlayers, timeRemaining, currentPeriod))}</div>
+                <div>{gameService.formatTime(gameService.calculatePlayerMinutes(game, player.id, activePlayers, timeRemaining, currentPeriod))}</div>
                 <div className="text-muted small">
                   {(() => {
-                    const subTime = calculatePlayerSubTime(game, player.id, currentPeriod, activePlayers);
-                    return subTime !== null ? formatTime(subTime) : '';
+                    const subTime = gameService.calculatePlayerSubTime(game, player.id, currentPeriod, activePlayers);
+                    return subTime !== null ? gameService.formatTime(subTime) : '';
                   })()}
                 </div>
               </td>
-              <td>{calculatePlayerFouls(game, player.id)}</td>
+              <td>{gameService.calculatePlayerFouls(game, player.id)}</td>
               <td>
                 <Badge bg={activePlayers.has(player.id) ? "success" : "secondary"}>
                   {activePlayers.has(player.id) ? "Court" : "Bench"}

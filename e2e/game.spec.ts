@@ -97,7 +97,7 @@ test.describe('Game Management', () => {
 
     // Start clock
     await page.getByRole('button', { name: 'Start' }).click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(1100);
     
     // Verify clock is running
     const timeAfterStart = await clockDisplay.getAttribute('data-seconds');

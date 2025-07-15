@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Container, Row, Col, Button, Badge, Alert } from 'react-bootstrap';
+import { Container, Row, Col } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
 import { Game, Substitution } from '../types';
 import { gameService } from '../services/gameService';
 import GameHeader from './GameHeader';
@@ -267,16 +266,11 @@ export const GameView: React.FC = () => {
       />
       <Row>
         <Col>
-          <h4>Players</h4>
           <PlayerTable
             game={game}
             activePlayers={activePlayers}
             currentPeriod={currentPeriod}
             timeRemaining={timeRemaining}
-            formatTime={gameService.formatTime}
-            calculatePlayerMinutes={gameService.calculatePlayerMinutes}
-            calculatePlayerSubTime={gameService.calculatePlayerSubTime}
-            calculatePlayerFouls={gameService.calculatePlayerFouls}
           />
         </Col>
       </Row>
