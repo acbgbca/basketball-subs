@@ -125,7 +125,7 @@ export const GameView: React.FC = () => {
 
   const handleEndPeriod = async () => {
     if (!game) return;
-    const updatedGame = await gameService.endPeriod(game, activePlayers, currentPeriod);
+    const updatedGame = await gameService.endPeriod(game);
     setIsRunning(false);
     if (currentPeriod < game.periods.length - 1) {
       setCurrentPeriod(prev => prev + 1);
@@ -156,8 +156,6 @@ export const GameView: React.FC = () => {
     if (!game) return;
     const { updatedGame, newActivePlayers } = await gameService.subModalSubmit(
       game,
-      currentPeriod,
-      activePlayers,
       subInPlayers,
       subOutPlayers,
       timeRemaining

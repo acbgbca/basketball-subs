@@ -13,12 +13,11 @@ interface GameService {
   calculatePlayerSubTime(game: Game, playerId: string, currentPeriod: number,
     activePlayers: Set<string>): number | null;
   calculatePeriodFouls(game: Game, currentPeriod: number): number;
-  endPeriod(game: Game, activePlayers: Set<string>, currentPeriod: number): Promise<Game>;
+  endPeriod(game: Game): Promise<Game>;
   deleteSubstitution(game: Game, currentPeriod: number, subToDelete: Substitution): Promise<Game>;
   editSubstitution(game: Game, currentPeriod: number, selectedSub: Substitution,
     timeIn: number, timeOut: number): Promise<Game>;
-  subModalSubmit(game: Game, currentPeriod: number, activePlayers: Set<string>,
-    subInPlayers: Set<string>, subOutPlayers: Set<string>, timeRemaining: number): Promise<{ updatedGame: Game, newActivePlayers: Set<string> }>;
+  subModalSubmit(game: Game, subInPlayers: Set<string>, subOutPlayers: Set<string>, timeRemaining: number): Promise<{ updatedGame: Game, newActivePlayers: Set<string> }>;
   addFoul(game: Game, currentPeriod: number, playerId: string, timeRemaining: number): Promise<Game>;
 }
 
@@ -82,12 +81,12 @@ export const gameService:GameService = {
     return game.periods[currentPeriod].fouls?.length || 0;
   },
 
-  async endPeriod(game: Game, activePlayers: Set<string>, currentPeriod: number): Promise<Game> {
+  async endPeriod(game: Game): Promise<Game> {
     // Sub out all active players with timeOut = 0
     const updatedPeriods = [...game.periods];
-    const currentPeriodData = updatedPeriods[currentPeriod];
+    const currentPeriodData = updatedPeriods[game.currentPeriod];
     let changed = false;
-    for (const playerId of activePlayers) {
+    for (const playerId of game.activePlayers) {
       const player = game.players.find(p => p.id === playerId);
       if (player) {
         const activeSub = currentPeriodData.substitutions.find(
@@ -107,7 +106,7 @@ export const gameService:GameService = {
       }
     }
     if (changed) {
-      updatedPeriods[currentPeriod] = currentPeriodData;
+      updatedPeriods[game.currentPeriod] = currentPeriodData;
       const updatedGame = { ...game, periods: updatedPeriods };
       await dbService.updateGame(updatedGame);
       return updatedGame;
@@ -143,14 +142,12 @@ export const gameService:GameService = {
 
   async subModalSubmit(
     game: Game,
-    currentPeriod: number,
-    activePlayers: Set<string>,
     subInPlayers: Set<string>,
     subOutPlayers: Set<string>,
     timeRemaining: number
   ): Promise<{ updatedGame: Game, newActivePlayers: Set<string> }> {
-    const newActivePlayers = new Set(activePlayers);
-    const currentPeriodData = game.periods[currentPeriod];
+    const newActivePlayers = new Set(game.activePlayers);
+    const currentPeriodData = game.periods[game.currentPeriod];
     let updatedPeriods = [...game.periods];
     // Handle Sub Out
     for (const playerId of subOutPlayers) {
@@ -165,7 +162,7 @@ export const gameService:GameService = {
             timeOut: timeRemaining,
             secondsPlayed: (activeSub.timeIn - timeRemaining)
           };
-          updatedPeriods[currentPeriod].substitutions = currentPeriodData.substitutions.map(
+          updatedPeriods[game.currentPeriod].substitutions = currentPeriodData.substitutions.map(
             sub => sub.id === activeSub.id ? updatedSub : sub
           );
           newActivePlayers.delete(player.id);
@@ -184,7 +181,7 @@ export const gameService:GameService = {
           secondsPlayed: null,
           periodId: currentPeriodData.id
         };
-        updatedPeriods[currentPeriod].substitutions.push(newSub);
+        updatedPeriods[game.currentPeriod].substitutions.push(newSub);
         newActivePlayers.add(player.id);
       }
     }
