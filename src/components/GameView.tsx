@@ -1,21 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Container, Row, Col, Button, Badge, Alert } from 'react-bootstrap';
+import { Container, Row, Col } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
 import { Game, Substitution } from '../types';
-import { dbService } from '../services/db';
-import {
-  formatTime,
-  calculatePlayerMinutes,
-  calculatePlayerFouls,
-  calculatePlayerSubTime,
-  calculatePeriodFouls,
-  endPeriod,
-  deleteSubstitution,
-  editSubstitution,
-  subModalSubmit,
-  addFoul
-} from '../services/gameService';
+import { gameService } from '../services/gameService';
 import GameHeader from './GameHeader';
 import PlayerTable from './PlayerTable';
 import SubstitutionTable from './SubstitutionTable';
@@ -59,7 +46,7 @@ export const GameView: React.FC = () => {
   useEffect(() => {
     const loadGame = async () => {
       if (id) {
-        const gameData = await dbService.getGame(id);
+        const gameData = await gameService.getGame(id);
         setGame(gameData);
         // Initialize states from persisted data
         setActivePlayers(new Set(gameData.activePlayers || []));
@@ -93,7 +80,7 @@ export const GameView: React.FC = () => {
       periodStartTime: isRunning ? Date.now() - ((game.periods[currentPeriod].length * 60) - timeRemaining) * 1000 : undefined,
       periodTimeElapsed: !isRunning ? game.periods[currentPeriod].length * 60 - timeRemaining : undefined,
     };
-    await dbService.updateGame(updatedGame);
+    await gameService.updateGame(updatedGame);
     setGame(updatedGame);
   };
 
@@ -138,7 +125,7 @@ export const GameView: React.FC = () => {
 
   const handleEndPeriod = async () => {
     if (!game) return;
-    const updatedGame = await endPeriod(game, activePlayers, currentPeriod);
+    const updatedGame = await gameService.endPeriod(game);
     setIsRunning(false);
     if (currentPeriod < game.periods.length - 1) {
       setCurrentPeriod(prev => prev + 1);
@@ -153,24 +140,22 @@ export const GameView: React.FC = () => {
 
   const handleDeleteSubstitution = async (subToDelete: Substitution) => {
     if (!game) return;
-    const updatedGame = await deleteSubstitution(game, currentPeriod, subToDelete);
+    const updatedGame = await gameService.deleteSubstitution(game, currentPeriod, subToDelete);
     setGame(updatedGame);
   };
 
   const handleEditSubstitution = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!game || !selectedSub) return;
-    const updatedGame = await editSubstitution(game, currentPeriod, selectedSub, editForm.timeIn, editForm.timeOut);
+    const updatedGame = await gameService.editSubstitution(game, currentPeriod, selectedSub, editForm.timeIn, editForm.timeOut);
     setGame(updatedGame);
     setShowEditSubModal(false);
   };
 
   const handleSubModalSubmit = async () => {
     if (!game) return;
-    const { updatedGame, newActivePlayers } = await subModalSubmit(
+    const { updatedGame, newActivePlayers } = await gameService.subModalSubmit(
       game,
-      currentPeriod,
-      activePlayers,
       subInPlayers,
       subOutPlayers,
       timeRemaining
@@ -184,7 +169,7 @@ export const GameView: React.FC = () => {
   
   const handleFoulConfirm = async () => {
     if (!game || !selectedFoulPlayerId) return;
-    const updatedGame = await addFoul(game, currentPeriod, selectedFoulPlayerId, timeRemaining);
+    const updatedGame = await gameService.addFoul(game, currentPeriod, selectedFoulPlayerId, timeRemaining);
     setGame(updatedGame);
     setShowFoulModal(false);
     setSelectedFoulPlayerId(null);
@@ -211,7 +196,7 @@ export const GameView: React.FC = () => {
         ...game,
         periodStartTime: Date.now() - ((game.periods[currentPeriod].length * 60) - newTime) * 1000
       };
-      dbService.updateGame(updatedGame);
+      gameService.updateGame(updatedGame);
       setGame(updatedGame);
     }
   };
@@ -267,7 +252,7 @@ export const GameView: React.FC = () => {
         teamName={game.team.name}
         opponent={game.opponent}
         currentPeriod={currentPeriod}
-        periodFouls={calculatePeriodFouls(game, currentPeriod)}
+        periodFouls={gameService.calculatePeriodFouls(game, currentPeriod)}
         timeRemaining={timeRemaining}
         isRunning={isRunning}
         onTimeAdjustment={handleTimeAdjustment}
@@ -275,20 +260,15 @@ export const GameView: React.FC = () => {
         onEndPeriod={() => setShowEndPeriodModal(true)}
         onShowSub={() => setShowSubModal(true)}
         onShowFoul={() => setShowFoulModal(true)}
-        formatTime={formatTime}
+        formatTime={gameService.formatTime}
       />
       <Row>
         <Col>
-          <h4>Players</h4>
           <PlayerTable
             game={game}
             activePlayers={activePlayers}
             currentPeriod={currentPeriod}
             timeRemaining={timeRemaining}
-            formatTime={formatTime}
-            calculatePlayerMinutes={calculatePlayerMinutes}
-            calculatePlayerSubTime={calculatePlayerSubTime}
-            calculatePlayerFouls={calculatePlayerFouls}
           />
         </Col>
       </Row>
@@ -300,7 +280,7 @@ export const GameView: React.FC = () => {
             currentPeriod={currentPeriod}
             showAllPeriods={showAllPeriods}
             onShowAllPeriodsChange={checked => setShowAllPeriods(checked)}
-            formatTime={formatTime}
+            formatTime={gameService.formatTime}
             onEditSub={sub => {
               setSelectedSub(sub);
               setEditForm({
@@ -348,7 +328,7 @@ export const GameView: React.FC = () => {
         selectedFoulPlayerId={selectedFoulPlayerId}
         setSelectedFoulPlayerId={setSelectedFoulPlayerId}
         game={game}
-        calculatePlayerFouls={calculatePlayerFouls}
+        calculatePlayerFouls={gameService.calculatePlayerFouls}
         handleFoulPlayerClick={handleFoulPlayerClick}
       />
     </Container>
