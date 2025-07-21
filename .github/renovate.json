@@ -16,6 +16,5 @@
     "commitMessagePrefix": "[Renovate] ",
     "rebaseWhen": "behind-base-branch",
     "automerge": true,
-    "automergeStrategy": "fast-forward",
     "platformAutomerge": false
 }
