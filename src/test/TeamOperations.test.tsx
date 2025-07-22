@@ -5,7 +5,6 @@ import { TeamView } from '../components/TeamView';
 import { TeamForm } from '../components/TeamForm';
 import { dbService } from '../services/db';
 import userEvent from '@testing-library/user-event';
-import { wait } from '@testing-library/user-event/dist/utils';
 
 jest.mock('../services/db');
 
@@ -83,8 +82,11 @@ describe('Team Operations', () => {
       expect(screen.getByText('Test Team')).toBeInTheDocument();
     });
 
-    userEvent.click(screen.getByText('Delete'));
-    userEvent.click(screen.getByText('Delete Team'));
+    await userEvent.click(screen.getByText('Delete'));
+    await waitFor(() => {
+      expect(screen.getByText('Confirm Delete')).toBeInTheDocument();
+    });
+    await userEvent.click(screen.getByText('Delete Team'));
 
     await waitFor(() => {
       expect(mockDeleteTeam).toHaveBeenCalledWith('1');

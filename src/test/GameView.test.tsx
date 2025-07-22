@@ -59,29 +59,35 @@ describe('Game Operations', () => {
     });
 
     // Time adjustments
-    [-1, -10, -30, 1, 10, 30].forEach(adjustment => {
+    for (const adjustment of [-1, -10, -30, 1, 10, 30]) {
       let timeBefore: number = parseInt(screen.getByTestId('clock-display').getAttribute('data-seconds') || '0');
       const buttonText = `${adjustment > 0 ? '+' : ''}${adjustment}s`;
-      userEvent.click(screen.getByText(buttonText));
-      expect(screen.getByTestId('clock-display').getAttribute('data-seconds')).toBe((timeBefore + adjustment).toString());
-    });
+      await userEvent.click(screen.getByText(buttonText));
+      await waitFor(() => {
+        expect(screen.getByTestId('clock-display').getAttribute('data-seconds')).toBe((timeBefore + adjustment).toString());
+      });
+    }
 
     // Start/Stop clock
-    userEvent.click(screen.getByText('Start'));
-    expect(screen.getByText('Stop')).toBeInTheDocument();
-    
-    userEvent.click(screen.getByText('Stop'));
-    expect(screen.getByText('Start')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('Start'));
+    await waitFor(() => {
+      expect(screen.getByText('Stop')).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByText('Stop'));
+    await waitFor(() => {
+      expect(screen.getByText('Start')).toBeInTheDocument();
+    });
 
     // Substitutions
-    userEvent.click(screen.getByText('Sub'));
+    await userEvent.click(screen.getByText('Sub'));
     await waitFor(() => {
       expect(screen.getByText('Manage Substitutions')).toBeInTheDocument();
     });
 
     let player1 = within(screen.getByTestId('substitution-modal')).getByText('Player 1');
-    userEvent.click(player1);
-    userEvent.click(screen.getByText('Done'));
+    await userEvent.click(player1);
+    await userEvent.click(screen.getByText('Done'));
 
     await waitFor(() => {
       expect(mockUpdateGame).toHaveBeenCalledWith(
@@ -97,14 +103,14 @@ describe('Game Operations', () => {
       );
     });
 
-    userEvent.click(screen.getByText('Sub'));
+    await userEvent.click(screen.getByText('Sub'));
     await waitFor(() => {
       expect(screen.getByText('Manage Substitutions')).toBeInTheDocument();
     });
 
     player1 = within(screen.getByTestId('substitution-modal')).getByText('Player 1');
-    userEvent.click(within(player1.closest('div')!).getByText('Out'));
-    userEvent.click(screen.getByText('Done'));
+    await userEvent.click(within(player1.closest('div')!).getByText('Out'));
+    await userEvent.click(screen.getByText('Done'));
 
     await waitFor(() => {
       expect(mockUpdateGame).toHaveBeenCalledWith(
@@ -121,8 +127,11 @@ describe('Game Operations', () => {
     });
 
     // End period
-    userEvent.click(screen.getByText('End Period'));
-    userEvent.click(screen.getByText('End Period', { selector: '.modal button' }));
+    await userEvent.click(screen.getByText('End Period'));
+    await waitFor(() => {
+      expect(screen.getByText('End Period', { selector: '.modal button' })).toBeInTheDocument();
+    });
+    await userEvent.click(screen.getByText('End Period', { selector: '.modal button' }));
 
     await waitFor(() => {
       expect(mockUpdateGame).toHaveBeenCalledWith(
@@ -259,14 +268,16 @@ describe('Game Operations', () => {
     userEvent.click(screen.getByTestId('sub-modal-done'));
 
     // Now record foul for Player 1
-    userEvent.click(screen.getByText('Foul'));
+    await userEvent.click(screen.getByText('Foul'));
     await waitFor(() => {
       expect(screen.getByText('Record Foul')).toBeInTheDocument();
     });
 
-    // Add first foul
-    userEvent.click(within(screen.getByTestId('foul-modal')).getByText('1 - Player 1'));
-    userEvent.click(within(screen.getByTestId('foul-modal')).getByText('Done'));
+    await waitFor(() => {
+      expect(screen.queryByTestId('foul-modal')).toBeInTheDocument();
+    });
+    await userEvent.click(within(screen.getByTestId('foul-modal')).getByText('1 - Player 1'));
+    await userEvent.click(within(screen.getByTestId('foul-modal')).getByText('Done'));
 
     await waitFor(() => {
       expect(mockUpdateGame).toHaveBeenCalledWith(
@@ -285,9 +296,12 @@ describe('Game Operations', () => {
     });
 
     // Add another foul
-    userEvent.click(screen.getByText('Foul'));
-    userEvent.click(within(screen.getByTestId('foul-modal')).getByText('1 - Player 1'));
-    userEvent.click(screen.getByText('Done'));
+    await userEvent.click(screen.getByText('Foul'));
+    await waitFor(() => {
+      expect(screen.getByTestId('foul-modal')).toBeInTheDocument();
+    });
+    await userEvent.click(within(screen.getByTestId('foul-modal')).getByText('1 - Player 1'));
+    await userEvent.click(screen.getByText('Done'));
 
     // Verify fouls are displayed
     await waitFor(() => {
