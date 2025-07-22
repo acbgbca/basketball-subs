@@ -1,15 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Row, Col, Card, Button, Modal } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, Modal, Form } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import { Team } from '../types';
 import { dbService } from '../services/db';
 import { TeamForm } from './TeamForm';
+
+import { useNavigate } from 'react-router-dom';
 
 export const TeamList: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showNewTeamModal, setShowNewTeamModal] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
+
+  // Import modal state
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importValue, setImportValue] = useState('');
+  const [importError, setImportError] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadTeams = async () => {
@@ -46,9 +54,14 @@ export const TeamList: React.FC = () => {
       <Row className="mb-4">
         <Col>
           <h2>Teams</h2>
-          <Button variant="primary" onClick={() => setShowNewTeamModal(true)}>
-            Add New Team
-          </Button>
+          <div className="d-flex gap-2">
+            <Button variant="primary" onClick={() => setShowNewTeamModal(true)}>
+              Add New Team
+            </Button>
+            <Button variant="outline-secondary" onClick={() => setShowImportModal(true)}>
+              Import
+            </Button>
+          </div>
         </Col>
       </Row>
       <Row>
@@ -112,6 +125,55 @@ export const TeamList: React.FC = () => {
             Delete Team
           </Button>
         </Modal.Footer>
+      </Modal>
+
+      {/* Import Modal */}
+      <Modal show={showImportModal} onHide={() => { setShowImportModal(false); setImportValue(''); setImportError(''); }}>
+        <Modal.Header closeButton>
+          <Modal.Title>Import Team</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
+            e.preventDefault();
+            setImportError('');
+            let share = importValue.trim();
+            // Try to extract ?share=... or &share=... from a full URL
+            const match = share.match(/[?&]share=([^&#]+)/);
+            if (match) {
+              share = match[1];
+            }
+            // If it looks like a valid share string (base64 or json), continue
+            if (!share) {
+              setImportError('Please enter a valid share URL or code.');
+              return;
+            }
+            // Navigate to TeamForm with share param
+            navigate(`/teams/new?share=${encodeURIComponent(share)}`);
+            setShowImportModal(false);
+            setImportValue('');
+          }}>
+            <Form.Group>
+              <Form.Label>Paste the full share URL or just the share code below:</Form.Label>
+              <Form.Control
+                type="text"
+                value={importValue}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setImportValue(e.target.value)}
+                placeholder="https://.../teams/new?share=... or just the code"
+                autoFocus
+                required
+              />
+            </Form.Group>
+            {importError && <div className="text-danger mt-2">{importError}</div>}
+            <div className="d-flex gap-2 mt-3 justify-content-end">
+              <Button variant="secondary" onClick={() => { setShowImportModal(false); setImportValue(''); setImportError(''); }}>
+                Cancel
+              </Button>
+              <Button variant="primary" type="submit">
+                Import
+              </Button>
+            </div>
+          </Form>
+        </Modal.Body>
       </Modal>
     </Container>
   );
