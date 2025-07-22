@@ -18,13 +18,14 @@ export interface Foul {
   timeRemaining: number;  // seconds remaining when foul occurred
 }
 
+
 export interface Substitution {
   id: string;
   player: Player;
-  timeIn: number;  // seconds remaining when subbed in
-  timeOut: number | null;  // seconds remaining when subbed out
+  timeInEvent: string; // ID of SubstitutionEvent when subbed in
+  timeOutEvent: string | null; // ID of SubstitutionEvent when subbed out
   secondsPlayed: number | null;
-  periodId: string;  // to track which period the substitution belongs to
+  periodId: string;
 }
 
 export interface Period {
@@ -32,7 +33,16 @@ export interface Period {
   periodNumber: number;
   length: 10 | 20;
   substitutions: Substitution[];
-  fouls: Foul[];  // Add fouls array to Period
+  fouls: Foul[];
+  subEvents: SubstitutionEvent[];
+}
+
+export interface SubstitutionEvent {
+  id: string;
+  eventTime: number; // seconds remaining in period
+  periodId: string;
+  subbedIn: Player[];
+  playersOut: Player[];
 }
 
 export interface Game {

@@ -24,13 +24,15 @@ Basketball Subs is a Progressive Web Application (PWA) built with React and Type
   - `modals/SubstitutionModal.tsx`: Manage substitutions dialog
   - `modals/FoulModal.tsx`: Record foul dialog
 
+
 ## Data Model (Summary)
 
 - **Player**: `{ id, name, number }`
 - **Team**: `{ id, name, players: Player[] }`
 - **Game**: `{ id, date, team, opponent, players, periods, activePlayers, currentPeriod, isRunning, periodStartTime?, periodTimeElapsed? }`
-- **Period**: `{ id, periodNumber, length, substitutions, fouls }`
-- **Substitution**: `{ id, player, timeIn, timeOut, secondsPlayed, periodId }`
+- **Period**: `{ id, periodNumber, length, substitutions, fouls, subEvents }`
+- **Substitution**: `{ id, player, timeInEvent, timeOutEvent, secondsPlayed, periodId }`
+- **SubstitutionEvent**: `{ id, eventTime, periodId, subbedIn: Player[], playersOut: Player[] }`
 - **Foul**: `{ id, player, periodId, timeRemaining }`
 
 ## Technical Stack

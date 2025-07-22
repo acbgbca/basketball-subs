@@ -49,6 +49,7 @@ A period represents a quarter or half in the game.
 | length        | 10 \| 20     | Length of the period in minutes (either 10 or 20) |
 | substitutions | Substitution[] | Array of substitutions made during this period |
 | fouls         | Foul[]       | Array of fouls committed during this period |
+| subEvents | SubstitutionEvent[] | Array of substitution events in this period |
 
 ### Substitution
 A substitution represents a player entering or leaving the game.
@@ -61,7 +62,19 @@ A substitution represents a player entering or leaving the game.
 | timeOut       | number? | Seconds remaining in the period when player exited (null if still in game) |
 | secondsPlayed | number? | Total seconds played in this substitution (null if still in game) |
 | periodId      | string  | ID of the period this substitution belongs to |
+| timeInEvent | string | ID of the SubstitutionEvent when subbed in |
+| timeOutEvent | string? | ID of the SubstitutionEvent when subbed out |
 
+### SubstitutionEvent
+A SubstitutionEvent represents a single substitution action, which may involve multiple players being subbed in and out at a specific time.
+
+| Field   | Type     | Description |
+|---------|----------|-------------|
+| id      | string   | Unique identifier for the substitution event |
+| eventTime | number | Seconds remaining in the period when the event occurred |
+| periodId | string  | The period this event belongs to |
+| subbedIn | Player[] | Array of players subbed onto the court |
+| playersOut | Player[] | Array of players subbed off the court |
 ### Foul
 A foul represents a personal foul committed by a player.
 
