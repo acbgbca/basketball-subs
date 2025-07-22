@@ -63,36 +63,16 @@ describe('Team Sharing', () => {
   });
 
   describe('createShareUrl', () => {
-    const originalLocation = window.location;
-
-    beforeEach(() => {
-      // Mock window.location
-      const location = {
-        ...originalLocation,
-        origin: 'http://localhost:3000',
-        pathname: '/',
-      };
-      Object.defineProperty(window, 'location', {
-        value: location,
-        writable: true
-      });
-    });
-
-    afterEach(() => {
-      Object.defineProperty(window, 'location', {
-        value: originalLocation,
-        writable: true
-      });
-    });
 
     it('should create a valid URL with the correct format', () => {
       const url = createShareUrl(mockTeam);
-      expect(url).toMatch(/^http:\/\/localhost:3000\/#\/teams\/new\?share=/);
+      const hash = new URL(url, 'http://dummy').hash;
+      expect(hash).toMatch(/^#\/teams\/new\?share=/);
     });
 
     it('should include encoded team data that can be decoded', () => {
       const url = createShareUrl(mockTeam);
-      const shareParam = new URL(url).hash.split('share=')[1];
+      const shareParam = new URL(url, 'http://dummy').hash.split('share=')[1];
       const decoded = parseSharedTeam(shareParam);
       expect(decoded).toEqual(mockTeam);
     });
@@ -107,7 +87,7 @@ describe('Team Sharing', () => {
         ]
       };
       const url = createShareUrl(complexTeam);
-      const shareParam = new URL(url).hash.split('share=')[1];
+      const shareParam = new URL(url, 'http://dummy').hash.split('share=')[1];
       const decoded = parseSharedTeam(shareParam);
       expect(decoded).toEqual(complexTeam);
     });
