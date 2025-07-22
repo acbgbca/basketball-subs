@@ -146,34 +146,80 @@ export const GameView: React.FC = () => {
   };
 
 
-  // Edit a substitution event (basic: just re-save current values; extend with modal for editing if needed)
-  const handleEditEvent = async (event: SubstitutionEvent) => {
+  // Edit a substitution event: open modal with event values for editing
+  const handleEditEvent = (event: SubstitutionEvent) => {
+    // To show the state as it was before the event:
+    // - On Court: activePlayers + playersOut - subbedIn
+    // - On Bench: all others
+    // - subInPlayers: subbedIn
+    // - subOutPlayers: playersOut
     if (!game) return;
-    // For now, just re-save the event as-is. In a real UI, you'd show a modal to edit these fields.
-    const updatedGame = await gameService.editSubstitution(
-      game,
-      currentPeriod,
-      event.id,
-      event.eventTime,
-      event.subbedIn,
-      event.playersOut
-    );
-    setGame(updatedGame);
+    // Find the period and all events up to (but not including) this event
+    const period = game.periods[currentPeriod];
+    const eventIdx = period.subEvents.findIndex(e => e.id === event.id);
+    // Start with initial activePlayers for the period
+    let prevActive = new Set(game.activePlayers);
+    // Rewind through subEvents up to this event to reconstruct state before it
+    if (eventIdx > -1) {
+      // Start with all subEvents up to (but not including) this one
+      prevActive = new Set(game.activePlayers);
+      // Apply all subEvents after this one in reverse to undo their effect
+      for (let i = period.subEvents.length - 1; i > eventIdx; i--) {
+        const e = period.subEvents[i];
+        // Undo subbedIn: remove from active
+        for (const p of e.subbedIn) prevActive.delete(p.id);
+        // Undo playersOut: add back to active
+        for (const p of e.playersOut) prevActive.add(p.id);
+      }
+      // Undo this event as well
+      for (const p of event.subbedIn) prevActive.delete(p.id);
+      for (const p of event.playersOut) prevActive.add(p.id);
+    }
+    setEditSubEventId(event.id);
+    setEditSubEventTime(event.eventTime);
+    setSubInPlayers(new Set(event.subbedIn.map(p => p.id)));
+    setSubOutPlayers(new Set(event.playersOut.map(p => p.id)));
+    setActivePlayers(prevActive);
+    setShowSubModal(true);
   };
 
   const handleSubModalSubmit = async () => {
     if (!game) return;
-    const { updatedGame, newActivePlayers } = await gameService.subModalSubmit(
-      game,
-      subInPlayers,
-      subOutPlayers,
-      timeRemaining
-    );
-    setGame(updatedGame);
-    setActivePlayers(newActivePlayers);
+    if (editSubEventId) {
+      // Editing an existing event
+      const subbedIn = Array.from(subInPlayers)
+        .map(id => game.players.find(p => p.id === id))
+        .filter((p): p is import('../types').Player => Boolean(p));
+      const playersOut = Array.from(subOutPlayers)
+        .map(id => game.players.find(p => p.id === id))
+        .filter((p): p is import('../types').Player => Boolean(p));
+      const updatedGame = await gameService.editSubstitution(
+        game,
+        currentPeriod,
+        editSubEventId,
+        editSubEventTime ?? timeRemaining,
+        subbedIn,
+        playersOut
+      );
+      setGame(updatedGame);
+      // Update activePlayers based on the event (optional: recalc from game)
+      setActivePlayers(new Set(updatedGame.activePlayers || []));
+    } else {
+      // New substitution event
+      const { updatedGame, newActivePlayers } = await gameService.subModalSubmit(
+        game,
+        subInPlayers,
+        subOutPlayers,
+        timeRemaining
+      );
+      setGame(updatedGame);
+      setActivePlayers(newActivePlayers);
+    }
     setShowSubModal(false);
     setSubInPlayers(new Set());
     setSubOutPlayers(new Set());
+    setEditSubEventId(null);
+    setEditSubEventTime(null);
   };
   
   const handleFoulConfirm = async () => {
@@ -306,7 +352,11 @@ export const GameView: React.FC = () => {
       />
       <SubstitutionModal
         show={showSubModal}
-        onHide={() => setShowSubModal(false)}
+        onHide={() => {
+          setShowSubModal(false);
+          setEditSubEventId(null);
+          setEditSubEventTime(null);
+        }}
         onSubmit={handleSubModalSubmit}
         activePlayers={activePlayers}
         subInPlayers={subInPlayers}

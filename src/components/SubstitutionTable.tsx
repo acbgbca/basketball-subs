@@ -58,22 +58,24 @@ const SubstitutionTable: React.FC<SubstitutionTableProps> = ({
                       <td>{event.subbedIn.map(p => p.name).join(', ')}</td>
                       <td>{event.playersOut.map(p => p.name).join(', ')}</td>
                       <td>
-                        <Button
-                          variant="outline-primary"
-                          size="sm"
-                          className="me-2"
-                          onClick={() => onEditEvent(event)}
-                        >
-                          Edit
-                        </Button>
                         {idx === 0 && (
-                          <Button
-                            variant="outline-danger"
-                            size="sm"
-                            onClick={() => onDeleteEvent(event)}
-                          >
-                            Delete
-                          </Button>
+                          <>
+                            <Button
+                              variant="outline-primary"
+                              size="sm"
+                              className="me-2"
+                              onClick={() => onEditEvent(event)}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="outline-danger"
+                              size="sm"
+                              onClick={() => onDeleteEvent(event)}
+                            >
+                              Delete
+                            </Button>
+                          </>
                         )}
                       </td>
                     </tr>

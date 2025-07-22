@@ -178,24 +178,79 @@ export const gameService:GameService = {
   },
 
   async editSubstitution(game: Game, currentPeriod: number, eventId: string, eventTime: number, subbedIn: Player[], playersOut: Player[]): Promise<Game> {
-    // Update SubstitutionEvent and related Substitution records
+    // Update SubstitutionEvent and keep Substitution records in sync
     const updatedPeriods = [...game.periods];
     const period = updatedPeriods[currentPeriod];
+    // Find the original event
+    const originalEvent = period.subEvents.find(e => e.id === eventId);
+    const origSubbedIn = originalEvent ? originalEvent.subbedIn.map(p => p.id) : [];
+    const origPlayersOut = originalEvent ? originalEvent.playersOut.map(p => p.id) : [];
+    const newSubbedIn = subbedIn.map(p => p.id);
+    const newPlayersOut = playersOut.map(p => p.id);
+
+    // Update the event itself
     period.subEvents = period.subEvents.map(e => e.id === eventId ? { ...e, eventTime, subbedIn, playersOut } : e);
-    // Update Substitution records for subbedIn and playersOut
+
+    // --- Handle subbedIn (sub in records) ---
+    // Remove substitution records for players no longer subbed in
+    period.substitutions = period.substitutions.filter(sub => {
+      if (sub.timeInEvent === eventId && !newSubbedIn.includes(sub.player.id)) {
+        return false; // Remove
+      }
+      return true;
+    });
+    // Add substitution records for new subbed in players
     for (const player of subbedIn) {
-      const sub = period.substitutions.find(s => s.player.id === player.id && s.timeInEvent === eventId);
-      if (sub) {
-        // Update nothing for now (could update other fields if needed)
+      if (!period.substitutions.some(sub => sub.player.id === player.id && sub.timeInEvent === eventId)) {
+        period.substitutions.push({
+          id: uuidv4(),
+          player,
+          timeInEvent: eventId,
+          timeOutEvent: null,
+          secondsPlayed: null,
+          periodId: period.id
+        });
       }
     }
+
+    // --- Handle playersOut (sub out records) ---
+    // For players who were subbed out originally but not now, remove their timeOutEvent and secondsPlayed
+    for (const playerId of origPlayersOut) {
+      if (!newPlayersOut.includes(playerId)) {
+        const sub = period.substitutions.find(s => s.player.id === playerId && s.timeOutEvent === eventId);
+        if (sub) {
+          sub.timeOutEvent = null;
+          sub.secondsPlayed = null;
+        }
+      }
+    }
+    // For players who are now subbed out (but weren't before), set timeOutEvent and secondsPlayed
     for (const player of playersOut) {
-      const sub = period.substitutions.find(s => s.player.id === player.id && s.timeOutEvent === eventId);
-      if (sub) {
-        // Update nothing for now (could update other fields if needed)
+      if (!origPlayersOut.includes(player.id)) {
+        // Find the active substitution for this player (should have timeOutEvent === null)
+        const sub = period.substitutions.find(s => s.player.id === player.id && s.timeOutEvent === null);
+        if (sub) {
+          // Find the timeInEvent and this event
+          const timeInEventObj = period.subEvents.find(e => e.id === sub.timeInEvent);
+          const timeOutEventObj = period.subEvents.find(e => e.id === eventId);
+          let secondsPlayed: number | null = null;
+          if (timeInEventObj && timeOutEventObj) {
+            secondsPlayed = timeInEventObj.eventTime - timeOutEventObj.eventTime;
+          }
+          sub.timeOutEvent = eventId;
+          sub.secondsPlayed = secondsPlayed;
+        }
       }
     }
-    const updatedGame = { ...game, periods: updatedPeriods };
+
+    // Recalculate activePlayers: those with a substitution record for this period with timeOutEvent === null
+    const activePlayersSet = new Set<string>();
+    for (const sub of period.substitutions) {
+      if (sub.timeOutEvent === null) {
+        activePlayersSet.add(sub.player.id);
+      }
+    }
+    const updatedGame = { ...game, periods: updatedPeriods, activePlayers: Array.from(activePlayersSet) };
     await dbService.updateGame(updatedGame);
     return updatedGame;
   },

@@ -75,6 +75,13 @@ A SubstitutionEvent represents a single substitution action, which may involve m
 | periodId | string  | The period this event belongs to |
 | subbedIn | Player[] | Array of players subbed onto the court |
 | playersOut | Player[] | Array of players subbed off the court |
+
+#### Editing Substitution Events
+Substitution events can be edited. When an event is edited, the application:
+- Updates the event's time, subbed in, and subbed out players.
+- Adds or removes substitution records as needed to match the new event.
+- Updates the end time and played time for players subbed out.
+- Ensures the game's active player list is recalculated to reflect the new on-court state after the edit.
 ### Foul
 A foul represents a personal foul committed by a player.
 
