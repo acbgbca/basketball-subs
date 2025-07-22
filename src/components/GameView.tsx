@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
-import { Game, Substitution } from '../types';
+import { Game, SubstitutionEvent } from '../types';
 import { gameService } from '../services/gameService';
 import GameHeader from './GameHeader';
 import PlayerTable from './PlayerTable';
@@ -20,18 +20,14 @@ export const GameView: React.FC = () => {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [showEditSubModal, setShowEditSubModal] = useState(false);
-  const [selectedSub, setSelectedSub] = useState<Substitution | null>(null);
+  // Remove selectedSub and editForm for substitution editing
   const [showFoulModal, setShowFoulModal] = useState(false);
   const [selectedFoulPlayerId, setSelectedFoulPlayerId] = useState<string | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const justAdjustedRef = useRef(false); // Add this new ref
   const baseTimeRef = useRef<{startTime: number; initialRemaining: number} | null>(null);
 
-  // Form state for editing substitutions
-  const [editForm, setEditForm] = useState({
-    timeIn: 0,
-    timeOut: 0
-  });
+
 
   // Add this with other state declarations
   const [showAllPeriods, setShowAllPeriods] = useState(false);
@@ -42,6 +38,9 @@ export const GameView: React.FC = () => {
   const [showSubModal, setShowSubModal] = useState(false);
   const [subInPlayers, setSubInPlayers] = useState<Set<string>>(new Set());
   const [subOutPlayers, setSubOutPlayers] = useState<Set<string>>(new Set());
+  // For editing a substitution event
+  const [editSubEventId, setEditSubEventId] = useState<string | null>(null);
+  const [editSubEventTime, setEditSubEventTime] = useState<number | null>(null);
 
   useEffect(() => {
     const loadGame = async () => {
@@ -138,33 +137,89 @@ export const GameView: React.FC = () => {
     setGame(updatedGame);
   };
 
-  const handleDeleteSubstitution = async (subToDelete: Substitution) => {
+
+  const handleDeleteEvent = async (event: SubstitutionEvent) => {
     if (!game) return;
-    const updatedGame = await gameService.deleteSubstitution(game, currentPeriod, subToDelete);
+    const updatedGame = await gameService.deleteSubstitution(game, currentPeriod, event.id);
     setGame(updatedGame);
+    setActivePlayers(new Set(updatedGame.activePlayers || []));
   };
 
-  const handleEditSubstitution = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!game || !selectedSub) return;
-    const updatedGame = await gameService.editSubstitution(game, currentPeriod, selectedSub, editForm.timeIn, editForm.timeOut);
-    setGame(updatedGame);
-    setShowEditSubModal(false);
+
+  // Edit a substitution event: open modal with event values for editing
+  const handleEditEvent = (event: SubstitutionEvent) => {
+    // To show the state as it was before the event:
+    // - On Court: activePlayers + playersOut - subbedIn
+    // - On Bench: all others
+    // - subInPlayers: subbedIn
+    // - subOutPlayers: playersOut
+    if (!game) return;
+    // Find the period and all events up to (but not including) this event
+    const period = game.periods[currentPeriod];
+    const eventIdx = period.subEvents.findIndex(e => e.id === event.id);
+    // Start with initial activePlayers for the period
+    let prevActive = new Set(game.activePlayers);
+    // Rewind through subEvents up to this event to reconstruct state before it
+    if (eventIdx > -1) {
+      // Start with all subEvents up to (but not including) this one
+      prevActive = new Set(game.activePlayers);
+      // Apply all subEvents after this one in reverse to undo their effect
+      for (let i = period.subEvents.length - 1; i > eventIdx; i--) {
+        const e = period.subEvents[i];
+        // Undo subbedIn: remove from active
+        for (const p of e.subbedIn) prevActive.delete(p.id);
+        // Undo playersOut: add back to active
+        for (const p of e.playersOut) prevActive.add(p.id);
+      }
+      // Undo this event as well
+      for (const p of event.subbedIn) prevActive.delete(p.id);
+      for (const p of event.playersOut) prevActive.add(p.id);
+    }
+    setEditSubEventId(event.id);
+    setEditSubEventTime(event.eventTime);
+    setSubInPlayers(new Set(event.subbedIn.map(p => p.id)));
+    setSubOutPlayers(new Set(event.playersOut.map(p => p.id)));
+    setActivePlayers(prevActive);
+    setShowSubModal(true);
   };
 
   const handleSubModalSubmit = async () => {
     if (!game) return;
-    const { updatedGame, newActivePlayers } = await gameService.subModalSubmit(
-      game,
-      subInPlayers,
-      subOutPlayers,
-      timeRemaining
-    );
-    setGame(updatedGame);
-    setActivePlayers(newActivePlayers);
+    if (editSubEventId) {
+      // Editing an existing event
+      const subbedIn = Array.from(subInPlayers)
+        .map(id => game.players.find(p => p.id === id))
+        .filter((p): p is import('../types').Player => Boolean(p));
+      const playersOut = Array.from(subOutPlayers)
+        .map(id => game.players.find(p => p.id === id))
+        .filter((p): p is import('../types').Player => Boolean(p));
+      const updatedGame = await gameService.editSubstitution(
+        game,
+        currentPeriod,
+        editSubEventId,
+        editSubEventTime ?? timeRemaining,
+        subbedIn,
+        playersOut
+      );
+      setGame(updatedGame);
+      // Update activePlayers based on the event (optional: recalc from game)
+      setActivePlayers(new Set(updatedGame.activePlayers || []));
+    } else {
+      // New substitution event
+      const { updatedGame, newActivePlayers } = await gameService.subModalSubmit(
+        game,
+        subInPlayers,
+        subOutPlayers,
+        timeRemaining
+      );
+      setGame(updatedGame);
+      setActivePlayers(newActivePlayers);
+    }
     setShowSubModal(false);
     setSubInPlayers(new Set());
     setSubOutPlayers(new Set());
+    setEditSubEventId(null);
+    setEditSubEventTime(null);
   };
   
   const handleFoulConfirm = async () => {
@@ -281,28 +336,13 @@ export const GameView: React.FC = () => {
             showAllPeriods={showAllPeriods}
             onShowAllPeriodsChange={checked => setShowAllPeriods(checked)}
             formatTime={gameService.formatTime}
-            onEditSub={sub => {
-              setSelectedSub(sub);
-              setEditForm({
-                timeIn: sub.timeIn,
-                timeOut: sub.timeOut || 0
-              });
-              setShowEditSubModal(true);
-            }}
-            onDeleteSub={handleDeleteSubstitution}
-            editForm={editForm}
-            setEditForm={setEditForm}
+            onEditEvent={handleEditEvent}
+            onDeleteEvent={handleDeleteEvent}
           />
         </Col>
       </Row>
 
-      <EditSubstitutionModal
-        show={showEditSubModal}
-        onHide={() => setShowEditSubModal(false)}
-        onSubmit={handleEditSubstitution}
-        editForm={editForm}
-        setEditForm={setEditForm}
-      />
+      {/* EditSubstitutionModal removed for event-based editing. Re-implement if needed. */}
       <EndPeriodModal
         show={showEndPeriodModal}
         onHide={() => setShowEndPeriodModal(false)}
@@ -312,13 +352,20 @@ export const GameView: React.FC = () => {
       />
       <SubstitutionModal
         show={showSubModal}
-        onHide={() => setShowSubModal(false)}
+        onHide={() => {
+          setShowSubModal(false);
+          setEditSubEventId(null);
+          setEditSubEventTime(null);
+        }}
         onSubmit={handleSubModalSubmit}
         activePlayers={activePlayers}
         subInPlayers={subInPlayers}
         subOutPlayers={subOutPlayers}
         game={game}
         handleSubButtonClick={handleSubButtonClick}
+        eventId={editSubEventId ?? undefined}
+        eventTime={editSubEventTime ?? undefined}
+        onEventTimeChange={setEditSubEventTime}
       />
       <FoulModal
         show={showFoulModal}

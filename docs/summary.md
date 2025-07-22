@@ -8,7 +8,7 @@ Basketball Subs is a Progressive Web Application (PWA) built with React and Type
 
 - **Team Management**: Create, edit, and manage basketball teams and their rosters. Teams can be shared and imported.
 - **Game Management**: Schedule and manage games, configure periods (2x20min halves or 4x10min quarters), and track which players are active for each game.
-- **Substitution Tracking**: Record player substitutions, including time in/out and seconds played, with a maximum of 5 players on the court at any time.
+- **Substitution Tracking**: Record and edit player substitutions, including time in/out and seconds played, with a maximum of 5 players on the court at any time. Editing a substitution event updates all related substitution records to ensure data consistency.
 - **Foul Tracking**: Log fouls per player, including period and time remaining.
 - **Period Management**: Track periods, substitutions, and fouls for each period.
 - **Statistics**: View player minutes, fouls, substitution history, and period-by-period stats.
@@ -21,16 +21,18 @@ Basketball Subs is a Progressive Web Application (PWA) built with React and Type
   - `SubstitutionTable.tsx`: Substitution list and actions
   - `modals/EditSubstitutionModal.tsx`: Edit substitution dialog
   - `modals/EndPeriodModal.tsx`: End period confirmation dialog
-  - `modals/SubstitutionModal.tsx`: Manage substitutions dialog
+  - `modals/SubstitutionModal.tsx`: Manage and edit substitutions dialog
   - `modals/FoulModal.tsx`: Record foul dialog
+
 
 ## Data Model (Summary)
 
 - **Player**: `{ id, name, number }`
 - **Team**: `{ id, name, players: Player[] }`
 - **Game**: `{ id, date, team, opponent, players, periods, activePlayers, currentPeriod, isRunning, periodStartTime?, periodTimeElapsed? }`
-- **Period**: `{ id, periodNumber, length, substitutions, fouls }`
-- **Substitution**: `{ id, player, timeIn, timeOut, secondsPlayed, periodId }`
+- **Period**: `{ id, periodNumber, length, substitutions, fouls, subEvents }`
+- **Substitution**: `{ id, player, timeInEvent, timeOutEvent, secondsPlayed, periodId }`
+- **SubstitutionEvent**: `{ id, eventTime, periodId, subbedIn: Player[], playersOut: Player[] }` (can be edited; editing updates all related substitution records and active player list)
 - **Foul**: `{ id, player, periodId, timeRemaining }`
 
 ## Technical Stack

@@ -21,8 +21,8 @@ describe('Game Operations', () => {
     team: mockTeam,
     date: new Date(),
     periods: [
-      { id: '1', periodNumber: 1, length: 20, substitutions: [], fouls: [] },
-      { id: '2', periodNumber: 2, length: 20, substitutions: [], fouls: [] }
+      { id: '1', periodNumber: 1, length: 20, substitutions: [], fouls: [], subEvents: [] },
+      { id: '2', periodNumber: 2, length: 20, substitutions: [], fouls: [], subEvents: [] }
     ],
     opponent: 'Opponent Team',
     players: mockTeam.players,
@@ -89,7 +89,7 @@ describe('Game Operations', () => {
           periods: expect.arrayContaining([
             expect.objectContaining({
               substitutions: expect.arrayContaining([
-                expect.objectContaining({ timeIn: expect.any(Number) })
+                expect.objectContaining({ timeInEvent: expect.any(String) })
               ])
             })
           ])
@@ -112,7 +112,7 @@ describe('Game Operations', () => {
           periods: expect.arrayContaining([
             expect.objectContaining({
               substitutions: expect.arrayContaining([
-                expect.objectContaining({ timeOut: expect.any(Number) })
+                expect.objectContaining({ timeOutEvent: expect.any(String) })
               ])
             })
           ])
@@ -130,7 +130,7 @@ describe('Game Operations', () => {
           periods: expect.arrayContaining([
             expect.objectContaining({
               substitutions: expect.arrayContaining([
-                expect.objectContaining({ timeOut: expect.any(Number) })
+                expect.objectContaining({ timeOutEvent: expect.any(String) })
               ])
             })
           ])
@@ -155,8 +155,8 @@ describe('Game Operations', () => {
       team: { ...mockTeam, players: testPlayers },
       date: new Date(),
       periods: [
-        { id: '1', periodNumber: 1, length: 20, substitutions: [], fouls: [] },
-        { id: '2', periodNumber: 2, length: 20, substitutions: [], fouls: [] }
+        { id: '1', periodNumber: 1, length: 20, substitutions: [], fouls: [], subEvents: [] },
+        { id: '2', periodNumber: 2, length: 20, substitutions: [], fouls: [], subEvents: [] }
       ],
       opponent: 'Opponent Team',
       players: testPlayers,
@@ -220,7 +220,7 @@ describe('Game Operations', () => {
       team: { ...mockTeam, players: testPlayers },
       date: new Date(),
       periods: [
-        { id: '1', periodNumber: 1, length: 20, substitutions: [], fouls: [] }
+        { id: '1', periodNumber: 1, length: 20, substitutions: [], fouls: [], subEvents: [] }
       ],
       opponent: 'Test Opponent',
       players: testPlayers,
