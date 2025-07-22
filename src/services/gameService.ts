@@ -224,22 +224,20 @@ export const gameService:GameService = {
         }
       }
     }
-    // For players who are now subbed out (but weren't before), set timeOutEvent and secondsPlayed
-    for (const player of playersOut) {
-      if (!origPlayersOut.includes(player.id)) {
-        // Find the active substitution for this player (should have timeOutEvent === null)
-        const sub = period.substitutions.find(s => s.player.id === player.id && s.timeOutEvent === null);
-        if (sub) {
-          // Find the timeInEvent and this event
-          const timeInEventObj = period.subEvents.find(e => e.id === sub.timeInEvent);
-          const timeOutEventObj = period.subEvents.find(e => e.id === eventId);
-          let secondsPlayed: number | null = null;
-          if (timeInEventObj && timeOutEventObj) {
-            secondsPlayed = timeInEventObj.eventTime - timeOutEventObj.eventTime;
-          }
-          sub.timeOutEvent = eventId;
-          sub.secondsPlayed = secondsPlayed;
+    // For all players who are subbed out by this event, set timeOutEvent and recalculate secondsPlayed
+    for (const playerId of newPlayersOut) {
+      // Find the substitution for this player (should have timeInEvent set, and timeOutEvent may be null or eventId)
+      const sub = period.substitutions.find(s => s.player.id === playerId && s.timeInEvent && s.timeInEvent !== null);
+      if (sub) {
+        // Find the timeInEvent and this event
+        const timeInEventObj = period.subEvents.find(e => e.id === sub.timeInEvent);
+        const timeOutEventObj = period.subEvents.find(e => e.id === eventId);
+        let secondsPlayed: number | null = null;
+        if (timeInEventObj && timeOutEventObj) {
+          secondsPlayed = timeInEventObj.eventTime - timeOutEventObj.eventTime;
         }
+        sub.timeOutEvent = eventId;
+        sub.secondsPlayed = secondsPlayed;
       }
     }
 
