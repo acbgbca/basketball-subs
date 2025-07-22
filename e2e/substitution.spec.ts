@@ -44,10 +44,10 @@ test.describe('Edit Substitution Event', () => {
     await subTable.getByRole('button', { name: 'Edit' }).first().click();
     // Fill the event time input in the modal
     const modal = page.getByTestId('substitution-modal');
-    await modal.locator('#eventTimeInput').fill('500');
+    await modal.locator('#eventTimeInput').fill('8:20');
     await modal.getByTestId('sub-modal-done').click();
     // Check that the substitution event time is updated in the table
-    await expect(subTable).toContainText('8:20'); // 500 seconds = 8:20
+    await expect(subTable).toContainText('8:20');
   });
 
   test('Change the player who was subbed in, making sure the time is correctly updated', async ({ page }) => {
