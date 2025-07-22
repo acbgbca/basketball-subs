@@ -25,29 +25,31 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // For navigation requests, serve index.html (for PWA link capturing)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      caches.match(BASE_PATH + '/index.html').then((response) => {
+        return response || fetch(event.request);
+      })
+    );
+    return;
+  }
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
-        // Cache hit - return response
         if (response) {
           return response;
         }
-
         return fetch(event.request).then(
           (response) => {
-            // Check if we received a valid response
             if(!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
-
-            // Clone the response
             const responseToCache = response.clone();
-
             caches.open(CACHE_NAME)
               .then((cache) => {
                 cache.put(event.request, responseToCache);
               });
-
             return response;
           }
         );
