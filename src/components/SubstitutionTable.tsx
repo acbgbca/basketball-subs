@@ -33,7 +33,7 @@ const SubstitutionTable: React.FC<SubstitutionTableProps> = ({
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => onShowAllPeriodsChange(e.target.checked)}
         className="mb-3"
       />
-      <Table striped bordered>
+      <Table striped bordered data-testid="substitution-table">
         <thead>
           <tr>
             <th>#</th>

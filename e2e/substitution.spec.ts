@@ -39,37 +39,44 @@ async function setupGameAndSub(page) {
 test.describe('Edit Substitution Event', () => {
   test('Edit the time for a substitution and verify all of the game time values are correctly updated', async ({ page }) => {
     await setupGameAndSub(page);
-    // Edit the most recent substitution event
-    await page.click('button:has-text("Edit")');
-    await page.fill('input#eventTimeInput', '500');
-    await page.click('button[data-testid="sub-modal-done"]');
+    // Edit the most recent substitution event (first Edit button in the table)
+    const subTable = page.getByTestId('substitution-table');
+    await subTable.getByRole('button', { name: 'Edit' }).first().click();
+    // Fill the event time input in the modal
+    const modal = page.getByTestId('substitution-modal');
+    await modal.locator('#eventTimeInput').fill('500');
+    await modal.getByTestId('sub-modal-done').click();
     // Check that the substitution event time is updated in the table
-    await expect(page.locator('td')).toContainText('8:20'); // 500 seconds = 8:20
+    await expect(subTable).toContainText('8:20'); // 500 seconds = 8:20
   });
 
   test('Change the player who was subbed in, making sure the time is correctly updated', async ({ page }) => {
     await setupGameAndSub(page);
     // Edit the most recent substitution event
-    await page.click('button:has-text("Edit")');
-    // Deselect Player6, select Player5
-    await page.click('button:has-text("Player6")');
-    await page.click('button:has-text("Player5")');
-    await page.click('button[data-testid="sub-modal-done"]');
+    const subTable = page.getByTestId('substitution-table');
+    await subTable.getByRole('button', { name: 'Edit' }).first().click();
+    const modal = page.getByTestId('substitution-modal');
+    // Deselect Player6, select Player5 (On Bench column)
+    await modal.getByRole('button', { name: 'Player6' }).click();
+    await modal.getByRole('button', { name: 'Player5' }).click();
+    await modal.getByTestId('sub-modal-done').click();
     // Check that Player5 is now shown as subbed in
-    await expect(page.locator('td')).toContainText('Player5');
-    await expect(page.locator('td')).not.toContainText('Player6');
+    await expect(subTable).toContainText('Player5');
+    await expect(subTable).not.toContainText('Player6');
   });
 
   test('Change the player who was subbed out, making sure the time is correctly updated', async ({ page }) => {
     await setupGameAndSub(page);
     // Edit the most recent substitution event
-    await page.click('button:has-text("Edit")');
-    // Deselect Player1, select Player2
-    await page.click('button:has-text("Player1")');
-    await page.click('button:has-text("Player2")');
-    await page.click('button[data-testid="sub-modal-done"]');
+    const subTable = page.getByTestId('substitution-table');
+    await subTable.getByRole('button', { name: 'Edit' }).first().click();
+    const modal = page.getByTestId('substitution-modal');
+    // Deselect Player1, select Player2 (On Court column)
+    await modal.getByRole('button', { name: 'Player1' }).click();
+    await modal.getByRole('button', { name: 'Player2' }).click();
+    await modal.getByTestId('sub-modal-done').click();
     // Check that Player2 is now shown as subbed out
-    await expect(page.locator('td')).toContainText('Player2');
-    await expect(page.locator('td')).not.toContainText('Player1');
+    await expect(subTable).toContainText('Player2');
+    await expect(subTable).not.toContainText('Player1');
   });
 });
