@@ -40,7 +40,7 @@ Basketball Subs is a Progressive Web Application (PWA) built with React and Type
 - **State/Storage**: IndexedDB via `idb` for offline data persistence
 - **Testing**: Jest (unit), Playwright (e2e)
 - **Build**: Webpack, Babel
-- **PWA**: Service worker, manifest, offline support
+- **PWA**: Service worker, manifest, offline support, and link capturing (shared team links open within the installed app)
 - **Service Layer**: Game logic and calculations are handled in `src/services/gameService.ts`.
 - **Component Structure**: Main game UI is split into modular components for maintainability and clarity.
 
