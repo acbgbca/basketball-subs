@@ -38,6 +38,9 @@ export const GameView: React.FC = () => {
   const [showSubModal, setShowSubModal] = useState(false);
   const [subInPlayers, setSubInPlayers] = useState<Set<string>>(new Set());
   const [subOutPlayers, setSubOutPlayers] = useState<Set<string>>(new Set());
+  // For editing a substitution event
+  const [editSubEventId, setEditSubEventId] = useState<string | null>(null);
+  const [editSubEventTime, setEditSubEventTime] = useState<number | null>(null);
 
   useEffect(() => {
     const loadGame = async () => {
@@ -310,6 +313,9 @@ export const GameView: React.FC = () => {
         subOutPlayers={subOutPlayers}
         game={game}
         handleSubButtonClick={handleSubButtonClick}
+        eventId={editSubEventId ?? undefined}
+        eventTime={editSubEventTime ?? undefined}
+        onEventTimeChange={setEditSubEventTime}
       />
       <FoulModal
         show={showFoulModal}
