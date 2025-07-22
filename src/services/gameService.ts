@@ -94,10 +94,11 @@ export const gameService:GameService = {
   },
 
   async endPeriod(game: Game): Promise<Game> {
-    // Sub out all active players with timeOut = 0
+    // Sub out all active players with a single SubstitutionEvent at timeOut = 0
     const updatedPeriods = [...game.periods];
     const currentPeriodData = updatedPeriods[game.currentPeriod];
-    let changed = false;
+    const playersOut: Player[] = [];
+    const updatedSubs: Substitution[] = [];
     for (const playerId of game.activePlayers) {
       const player = game.players.find(p => p.id === playerId);
       if (player) {
@@ -105,29 +106,39 @@ export const gameService:GameService = {
           sub => sub.player.id === player.id && sub.timeOutEvent === null
         );
         if (activeSub) {
-          // End period: create a new SubstitutionEvent for timeOutEvent = 0
-          const eventId = uuidv4();
-          const endEvent = {
-            id: eventId,
-            eventTime: 0,
-            periodId: currentPeriodData.id,
-            subbedIn: [],
-            playersOut: [player]
-          };
-          currentPeriodData.subEvents = [...(currentPeriodData.subEvents || []), endEvent];
-          const updatedSub: Substitution = {
+          playersOut.push(player);
+          // Calculate secondsPlayed
+          const timeInEventObj = currentPeriodData.subEvents.find(e => e.id === activeSub.timeInEvent);
+          let secondsPlayed: number | null = null;
+          if (timeInEventObj) {
+            secondsPlayed = timeInEventObj.eventTime - 0;
+          }
+          updatedSubs.push({
             ...activeSub,
-            timeOutEvent: eventId,
-            secondsPlayed: null // will be calculated later
-          };
-          currentPeriodData.substitutions = currentPeriodData.substitutions.map(
-            sub => sub.id === activeSub.id ? updatedSub : sub
-          );
-          changed = true;
+            timeOutEvent: '', // placeholder, will set after event is created
+            secondsPlayed
+          });
         }
       }
     }
-    if (changed) {
+    if (playersOut.length > 0) {
+      const eventId = uuidv4();
+      const endEvent: SubstitutionEvent = {
+        id: eventId,
+        eventTime: 0,
+        periodId: currentPeriodData.id,
+        subbedIn: [],
+        playersOut
+      };
+      currentPeriodData.subEvents = [...(currentPeriodData.subEvents || []), endEvent];
+      // Update substitutions with the new eventId
+      currentPeriodData.substitutions = currentPeriodData.substitutions.map(sub => {
+        const updated = updatedSubs.find(us => us.id === sub.id);
+        if (updated) {
+          return { ...updated, timeOutEvent: eventId };
+        }
+        return sub;
+      });
       updatedPeriods[game.currentPeriod] = currentPeriodData;
       const updatedGame = { ...game, periods: updatedPeriods };
       await dbService.updateGame(updatedGame);
@@ -137,12 +148,12 @@ export const gameService:GameService = {
   },
 
   async deleteSubstitution(game: Game, currentPeriod: number, eventId: string): Promise<Game> {
-    // Delete SubstitutionEvent and update Substitution records
+    // Delete SubstitutionEvent and update Substitution records and activePlayers
     const updatedPeriods = [...game.periods];
     const period = updatedPeriods[currentPeriod];
-    period.subEvents = period.subEvents.filter(e => e.id !== eventId);
-    // Remove Substitution records for subbed in, and clear timeOutEvent for subbed out
     const event = period.subEvents.find(e => e.id === eventId);
+    period.subEvents = period.subEvents.filter(e => e.id !== eventId);
+    let updatedActivePlayers = new Set(game.activePlayers);
     if (event) {
       // Remove substitutions for subbedIn
       period.substitutions = period.substitutions.filter(sub => !event.subbedIn.some(p => p.id === sub.player.id && sub.timeInEvent === eventId));
@@ -153,8 +164,15 @@ export const gameService:GameService = {
         }
         return sub;
       });
+      // Reverse the event: add subbedIn back to inactive, add playersOut back to active
+      for (const player of event.subbedIn) {
+        updatedActivePlayers.delete(player.id);
+      }
+      for (const player of event.playersOut) {
+        updatedActivePlayers.add(player.id);
+      }
     }
-    const updatedGame = { ...game, periods: updatedPeriods };
+    const updatedGame = { ...game, periods: updatedPeriods, activePlayers: Array.from(updatedActivePlayers) };
     await dbService.updateGame(updatedGame);
     return updatedGame;
   },

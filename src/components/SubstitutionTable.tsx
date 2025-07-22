@@ -49,8 +49,8 @@ const SubstitutionTable: React.FC<SubstitutionTableProps> = ({
             .sort((a, b) => b.periodNumber - a.periodNumber)
             .map(period => (
               period.subEvents && period.subEvents.length > 0 ?
-                period.subEvents
-                  .sort((a, b) => b.eventTime - a.eventTime)
+                [...period.subEvents]
+                  .sort((a, b) => a.eventTime - b.eventTime)
                   .map((event, idx) => (
                     <tr key={event.id}>
                       <td>{period.periodNumber}</td>

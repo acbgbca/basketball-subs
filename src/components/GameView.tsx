@@ -139,6 +139,7 @@ export const GameView: React.FC = () => {
     if (!game) return;
     const updatedGame = await gameService.deleteSubstitution(game, currentPeriod, event.id);
     setGame(updatedGame);
+    setActivePlayers(new Set(updatedGame.activePlayers || []));
   };
 
 
