@@ -1,5 +1,5 @@
 // Shared team helpers for Playwright tests
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 
 const LIST_TEAMS_PAGE = "/#/teams"
 const EDIT_TEAM_REGEX = /\/#\/teams\/.*$/
@@ -22,7 +22,7 @@ export async function createTeamWithPlayers(page: Page, teamName: string, player
     for (const player of players) {
         await addPlayer(page, player.number, player.name);
     }
-    await page.getByRole('button', { name: 'Save Changes' }).click();
+    await saveTeamChanges(page);
     await page.getByRole('button', { name: 'Done' }).click();
 }
 
@@ -35,3 +35,20 @@ export async function addPlayer(page: Page, playerNumber: number, playerName: st
     await lastRow.getByLabel('Player Name').fill(playerName);
 }
 
+export async function editTeamName(page: Page, teamName: string) {
+    const teamNameInput = page.getByLabel('Team Name');
+    await teamNameInput.clear();
+    await teamNameInput.fill(teamName);
+}
+
+export async function saveTeamChanges(page: Page) {
+    await page.getByRole('button', { name: 'Save Changes' }).click();
+}
+
+export async function verifyTeamName(page: Page, teamName: string) {
+    await expect(page.getByLabel('Team Name')).toHaveValue(teamName);
+}
+
+export async function verifyViewTeamPage(page: Page) {
+    await expect(page).toHaveURL(/\/#\/teams\/.*$/);
+}
