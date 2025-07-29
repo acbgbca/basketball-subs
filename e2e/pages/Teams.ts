@@ -9,6 +9,11 @@ export async function navigateToTeamList(page: Page) {
   await page.waitForSelector('text=Teams');
 }
 
+export async function navigateToTeam(page: Page, teamName: string) {
+    await navigateToTeamList(page);
+    await page.getByTestId('view-team-' + teamName).click()
+}
+
 export async function createTeam(page: Page, teamName: string) {
     await navigateToTeamList(page);
     await page.getByRole('button', { name: 'Add New Team' }).click();

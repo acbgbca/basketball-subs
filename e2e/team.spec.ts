@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { addPlayer, createTeam, createTeamWithPlayers, editTeamName, saveTeamChanges, verifyTeamName, verifyViewTeamPage } from './pages/Teams';
+import { addPlayer, createTeam, createTeamWithPlayers, editTeamName, navigateToTeam, saveTeamChanges, verifyTeamName, verifyViewTeamPage } from './pages/Teams';
 
 test.describe('Team Management', () => {
   test('should create a new team and navigate to team view', async ({ page }) => {
@@ -19,7 +19,9 @@ test.describe('Team Management', () => {
     // and Save the changes
     await saveTeamChanges(page);
     
-    // Then the player appears in the table
+    // Then when we return to the team page
+    await navigateToTeam(page, 'Player Test Team');
+    // The player should appear
     await expect(page.getByTestId('player-23')).toBeVisible();
     await expect(page.getByTestId('player-23').getByLabel('Player Name')).toHaveValue('John Doe');
     await expect(page.getByTestId('player-23').getByLabel('Player Number')).toHaveValue('23');
@@ -34,6 +36,8 @@ test.describe('Team Management', () => {
     // and save changes
     await saveTeamChanges(page);
     
+    // Then when we return to the team page
+    await navigateToTeam(page, 'Updated Team Name');
     // Verify updates are saved - should show the new name
     await verifyTeamName(page, 'Updated Team Name');
   });
