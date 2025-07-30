@@ -1,81 +1,44 @@
 import { test, expect } from '@playwright/test';
+import { addPlayer, createTeam, createTeamWithPlayers, editTeamName, navigateToTeam, saveTeamChanges, verifyTeamName, verifyViewTeamPage } from './pages/Teams';
 
 test.describe('Team Management', () => {
   test('should create a new team and navigate to team view', async ({ page }) => {
-    await page.goto('/#/teams');
-    await page.getByRole('button', { name: 'Add New Team' }).click();
-    
-    await page.fill('#teamName', 'Test Team');
-    await page.getByRole('button', { name: 'Create Team' }).click();
-    
-    // Should navigate to team view
-    await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
-    await expect(page.getByLabel('Team Name')).toHaveValue('Test Team');
-  });  test('should view team details', async ({ page }) => {
-    // First create a team
-    await page.goto('/#/teams');
-    await page.getByRole('button', { name: 'Add New Team' }).click();
-    await page.fill('#teamName', 'View Test Team');
-    await page.getByRole('button', { name: 'Create Team' }).click();
-    
-    // Should go directly to team view
-    await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
-    await expect(page.getByLabel('Team Name')).toHaveValue('View Test Team');
+    // Given we have no team
+    // When we create a team
+    await createTeam(page, 'Test Team');
+    // Then we should be shown the team details page
+    await verifyViewTeamPage(page);
+    await verifyTeamName(page, 'Test Team');
   });
-
+  
   test('should add a player to team', async ({ page }) => {
-    // First create a team
-    await page.goto('/#/teams');
-    await page.getByRole('button', { name: 'Add New Team' }).click();
-    await page.fill('#teamName', 'Player Test Team');
-    await page.getByRole('button', { name: 'Create Team' }).click();
+    // Given we have a team
+    await createTeam(page, 'Player Test Team');
+    // When we add a player
+    await addPlayer(page, 23, 'John Doe')
+    // and Save the changes
+    await saveTeamChanges(page);
     
-    // Should navigate to team view page
-    await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
-    
-    // Add player
-    await page.getByRole('button', { name: 'Add Player' }).click();
-    const rows = await page.getByRole('row').all();
-    const lastRow = rows[rows.length - 1]; // New player is added at the end
-    
-    // Fill in player details in the table inputs
-    await lastRow.getByLabel('Player Number').fill('23');
-    await lastRow.getByLabel('Player Name').fill('John Doe');
-    
-    // Save the changes
-    await page.getByRole('button', { name: 'Save Changes' }).click();
-    
-    // Verify the player appears in the table
+    // Then when we return to the team page
+    await navigateToTeam(page, 'Player Test Team');
+    // The player should appear
     await expect(page.getByTestId('player-23')).toBeVisible();
     await expect(page.getByTestId('player-23').getByLabel('Player Name')).toHaveValue('John Doe');
     await expect(page.getByTestId('player-23').getByLabel('Player Number')).toHaveValue('23');
   });
 
   test('should edit team name', async ({ page }) => {
-    // First create a team using modal
-    await page.goto('/#/teams');
-    await page.getByRole('button', { name: 'Add New Team' }).click();
-    await page.fill('#teamName', 'Edit Name Team');
-    await page.getByRole('button', { name: 'Create Team' }).click();
+    // Given we have a team
+    await createTeam(page, 'Edit Name Team');
     
-    // Should navigate to team view page
-    await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
+    // When we edit team name
+    await editTeamName(page, 'Updated Team Name');
+    // and save changes
+    await saveTeamChanges(page);
     
-    // Edit team name
-    const teamNameInput = page.getByLabel('Team Name');
-    await teamNameInput.clear();
-    await teamNameInput.fill('Updated Team Name');
-    
-    // Save changes
-    await page.getByRole('button', { name: 'Save Changes' }).click();
-    
+    // Then when we return to the team page
+    await navigateToTeam(page, 'Updated Team Name');
     // Verify updates are saved - should show the new name
-    await expect(page.getByLabel('Team Name')).toHaveValue('Updated Team Name');
+    await verifyTeamName(page, 'Updated Team Name');
   });
-});
-
-// Add basic smoke test
-test('homepage should load', async ({ page }) => {
-  await page.goto('/', { waitUntil: 'networkidle' });
-  await expect(page.locator('body')).toBeVisible();
 });

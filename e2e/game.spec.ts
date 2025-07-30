@@ -1,52 +1,28 @@
 import { test, expect } from '@playwright/test';
+import { createTeam, createTeamWithPlayers } from './pages/Teams';
+import { createANewGame } from './pages/SetupGame';
+
 
 test.describe('Game Management', () => {
   test('should create a new game', async ({ page }) => {
-    // First create a team using modal
-    await page.goto('/#/teams');
-    await page.getByRole('button', { name: 'Add New Team' }).click();
-    await page.fill('#teamName', 'Game Test Team');
-    await page.getByRole('button', { name: 'Create Team' }).click();
-    await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
-    await page.goto('/#/teams');
-
-    // Create a new game
-    await page.goto('/#/games/new');
-    await page.waitForSelector('[data-testid="team-select"]', { timeout: 5000 });
-    await page.selectOption('[data-testid="team-select"]', { label: 'Game Test Team' });
-    await page.fill('#opponent', 'Test Opponent');
-    await page.getByRole('button', { name: 'Create Game' }).click();
-
-    await expect(page).toHaveURL('/#/games');
-    await expect(page.getByText('Game Test Team')).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText('Test Opponent')).toBeVisible({ timeout: 5000 });
+    const teamName = 'Game Test Team';
+    const opponentName = 'Test Opponent';
+    // Given a team exists
+    await createTeam(page, teamName);
+    // When user starts a game
+    await createANewGame(page, teamName, opponentName);
+    // Then the game should be created and appear in the list
+    await expect(page.getByText(teamName)).toBeVisible();
+    await expect(page.getByText(opponentName)).toBeVisible();
   });
 
   test('should create a new game with auto-selected players', async ({ page }) => {
-    // First create a team with players using modal
-    await page.goto('/#/teams');
-    await page.getByRole('button', { name: 'Add New Team' }).click();
-    await page.fill('#teamName', 'Auto Select Team');
-    await page.getByRole('button', { name: 'Create Team' }).click();
-    await page.waitForURL(/\/#\/teams\/.*$/, { timeout: 5000 });
-    
-    // Add players
-    // Add player 1
-    await page.getByRole('button', { name: 'Add Player' }).click();
-    const rows = await page.getByRole('row').all();
-    let lastRow = rows[rows.length - 1];
-    await lastRow.getByLabel('Player Number').fill('1');
-    await lastRow.getByLabel('Player Name').fill('Auto Player 1');
-    
-    // Add player 2
-    await page.getByRole('button', { name: 'Add Player' }).click();
-    const updatedRows = await page.getByRole('row').all();
-    lastRow = updatedRows[updatedRows.length - 1];
-    await lastRow.getByLabel('Player Number').fill('2');
-    await lastRow.getByLabel('Player Name').fill('Auto Player 2');
-    
-    // Save the changes
-    await page.getByRole('button', { name: 'Save Changes' }).click();
+    const teamName = 'Auto Select Team';
+    // Given we have a team with 2 players
+    await createTeamWithPlayers(page, teamName, [
+      { number: 1, name: 'Auto Player 1' },
+      { number: 2, name: 'Auto Player 2' }
+    ]);
 
     // Create game
     await page.goto('/#/games/new');

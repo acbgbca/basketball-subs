@@ -40,7 +40,7 @@ Basketball Subs is a Progressive Web Application (PWA) built with React and Type
 - **Frontend**: React, TypeScript, React-Bootstrap
 - **Routing**: React Router (HashRouter)
 - **State/Storage**: IndexedDB via `idb` for offline data persistence
-- **Testing**: Jest (unit), Playwright (e2e)
+- **Testing**: Jest (unit), Playwright (e2e). Playwright tests are structured using a Given-When-Then format, with common setup and actions extracted into shared helper files under `e2e/pages/` based on the page (e.g., `RunGame.ts`, `SetupGame.ts`, `Teams.ts`). This reduces duplication and improves maintainability. Test authors are encouraged to use these helpers.
 - **Build**: Webpack, Babel
 - **PWA**: Service worker, manifest, offline support, and link capturing (shared team links open within the installed app)
 - **Service Layer**: Game logic and calculations are handled in `src/services/gameService.ts`.
