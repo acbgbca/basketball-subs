@@ -5,7 +5,7 @@ const LIST_GAMES_PAGE = "/#/games"
 
 export async function navigateToGameList(page: Page) {
   await page.goto(LIST_GAMES_PAGE);
-  await page.waitForSelector('text=Games');
+  await page.getByRole('heading', { name: 'Games' }).waitFor();
 }
 
 export async function createANewGame(page: Page, teamName: string, opponentName: string) {

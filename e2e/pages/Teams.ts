@@ -6,7 +6,7 @@ const EDIT_TEAM_REGEX = /\/#\/teams\/.*$/
 
 export async function navigateToTeamList(page: Page) {
   await page.goto(LIST_TEAMS_PAGE);
-  await page.waitForSelector('text=Teams');
+  await page.getByRole('heading', { name: 'Teams' }).waitFor();
 }
 
 export async function navigateToTeam(page: Page, teamName: string) {
