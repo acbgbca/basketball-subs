@@ -96,3 +96,44 @@ export async function shareTeam(page: Page, teamName: string) {
 export async function cancelTeamChanges(page: Page) {
     await page.getByRole('button', { name: 'Cancel' }).click();
 }
+
+// Validation helper functions
+export async function attemptToCreateTeamWithoutName(page: Page) {
+    await navigateToTeamList(page);
+    await page.getByRole('button', { name: 'Add New Team' }).click();
+    // Try to submit without entering a team name
+    await page.getByRole('button', { name: 'Create Team' }).click();
+}
+
+export async function addPlayerWithEmptyFields(page: Page) {
+    await page.getByRole('button', { name: 'Add Player' }).click();
+    const rows = await page.getByRole('row').all();
+    const lastRow = rows[rows.length - 1];
+    // Leave both fields empty - they should have required validation
+    return lastRow;
+}
+
+export async function addPlayerWithInvalidNumber(page: Page, invalidNumber: string, playerName: string) {
+    await page.getByRole('button', { name: 'Add Player' }).click();
+    const rows = await page.getByRole('row').all();
+    const lastRow = rows[rows.length - 1];
+    await lastRow.getByLabel('Player Number').fill(invalidNumber);
+    await lastRow.getByLabel('Player Name').fill(playerName);
+    return lastRow;
+}
+
+export async function verifyPlayerNumberConstraints(page: Page, playerNumber: number) {
+    const playerRow = page.getByTestId(`player-${playerNumber}`);
+    const numberInput = playerRow.getByLabel('Player Number');
+    
+    // Verify HTML5 validation attributes
+    await expect(numberInput).toHaveAttribute('inputMode', 'numeric');
+    await expect(numberInput).toHaveAttribute('pattern', '[0-9]*');
+    await expect(numberInput).toHaveAttribute('maxLength', '3');
+    await expect(numberInput).toHaveAttribute('required');
+}
+
+export async function verifyRequiredFieldValidation(page: Page, fieldLabel: string) {
+    const field = page.getByLabel(fieldLabel);
+    await expect(field).toHaveAttribute('required');
+}
