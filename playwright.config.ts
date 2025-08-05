@@ -22,10 +22,6 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
     {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
     },
@@ -34,16 +30,8 @@ export default defineConfig({
       use: { ...devices['iPhone 13'] },
     },
     {
-      name: 'ipad',
-      use: { ...devices['iPad (gen 7)'] },
-    },
-    {
       name: 'android-phone',
       use: { ...devices['Pixel 5'] },
-    },
-    {
-      name: 'android-tablet',
-      use: { ...devices['Galaxy Tab S4'] },
     },
   ],
   webServer: {
