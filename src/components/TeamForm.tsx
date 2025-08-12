@@ -15,6 +15,7 @@ interface TeamFormProps {
 export const TeamForm: React.FC<TeamFormProps> = ({ isModal, onClose, onTeamCreated }) => {
   const [teamName, setTeamName] = useState('');
   const [players, setPlayers] = useState<Array<{id: string; name: string; number: string}>>([]);
+  const [validationErrors, setValidationErrors] = useState<{[playerId: string]: string}>({});
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -27,16 +28,49 @@ export const TeamForm: React.FC<TeamFormProps> = ({ isModal, onClose, onTeamCrea
       const sharedTeam = parseSharedTeam(shareData);
       if (sharedTeam) {
         setTeamName(sharedTeam.name);
-        setPlayers(sharedTeam.players.map(p => ({
+        const importedPlayers = sharedTeam.players.map(p => ({
           id: uuidv4(),
           ...p
-        })));
+        }));
+        setPlayers(importedPlayers);
+        // Validate imported players for duplicates
+        validatePlayerNumbers(importedPlayers);
       }
     }
   }, [location]);
 
+  const validatePlayerNumbers = (playerList: Array<{id: string; name: string; number: string}>) => {
+    const errors: {[playerId: string]: string} = {};
+    const numberCounts: {[number: string]: Array<{id: string; name: string; number: string}>} = {};
+    
+    // Group players by number
+    playerList.forEach(player => {
+      if (player.number.trim()) {
+        if (!numberCounts[player.number]) {
+          numberCounts[player.number] = [];
+        }
+        numberCounts[player.number].push(player);
+      }
+    });
+    
+    // Find duplicates and mark all but the first as errors
+    Object.entries(numberCounts).forEach(([number, playersWithNumber]) => {
+      if (playersWithNumber.length > 1) {
+        // Mark all but the first player as having an error
+        playersWithNumber.slice(1).forEach(player => {
+          errors[player.id] = `Player number ${number} is already used`;
+        });
+      }
+    });
+    
+    setValidationErrors(errors);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Don't submit if there are validation errors
+    if (Object.keys(validationErrors).length > 0) return;
     
     const newTeam: Team = {
       id: uuidv4(),
@@ -89,12 +123,20 @@ export const TeamForm: React.FC<TeamFormProps> = ({ isModal, onClose, onTeamCrea
                       type="text"
                       value={player.number}
                       onChange={(e) => {
-                        setPlayers(prev => prev.map(p => 
+                        const updatedPlayers = players.map(p => 
                           p.id === player.id ? { ...p, number: e.target.value } : p
-                        ));
+                        );
+                        setPlayers(updatedPlayers);
+                        validatePlayerNumbers(updatedPlayers);
                       }}
                       required
+                      isInvalid={!!validationErrors[player.id]}
                     />
+                    {validationErrors[player.id] && (
+                      <Form.Control.Feedback type="invalid">
+                        {validationErrors[player.id]}
+                      </Form.Control.Feedback>
+                    )}
                   </td>
                   <td>
                     <Form.Control
@@ -121,7 +163,11 @@ export const TeamForm: React.FC<TeamFormProps> = ({ isModal, onClose, onTeamCrea
             Cancel
           </Button>
         )}
-        <Button variant="primary" type="submit">
+        <Button 
+          variant="primary" 
+          type="submit"
+          disabled={Object.keys(validationErrors).length > 0}
+        >
           Create Team
         </Button>
       </div>

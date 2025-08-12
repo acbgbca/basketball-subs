@@ -15,26 +15,61 @@ export const TeamView: React.FC = (): ReactElement => {
   const [hasChanges, setHasChanges] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<{[playerId: string]: string}>({});
 
   useEffect(() => {
     const loadTeam = async () => {
       if (id) {
         const teamData = await dbService.getTeam(id);
         setTeam(teamData);
-        setEditedPlayers(teamData?.players || []);
+        const players = teamData?.players || [];
+        setEditedPlayers(players);
         setEditedTeamName(teamData?.name || '');
+        // Validate existing players for duplicates
+        validatePlayerNumbers(players);
       }
     };
     loadTeam();
   }, [id]);
 
   const handlePlayerChange = (playerId: string, field: 'name' | 'number', value: string) => {
-    setEditedPlayers(players => 
-      players.map(player => 
-        player.id === playerId ? { ...player, [field]: value } : player
-      )
+    const updatedPlayers = editedPlayers.map(player => 
+      player.id === playerId ? { ...player, [field]: value } : player
     );
+    setEditedPlayers(updatedPlayers);
     setHasChanges(true);
+    
+    // Validate for duplicate numbers if the number field changed
+    if (field === 'number') {
+      validatePlayerNumbers(updatedPlayers);
+    }
+  };
+
+  const validatePlayerNumbers = (players: Player[]) => {
+    const errors: {[playerId: string]: string} = {};
+    const numberCounts: {[number: string]: Player[]} = {};
+    
+    // Group players by number
+    players.forEach(player => {
+      if (player.number.trim()) {
+        if (!numberCounts[player.number]) {
+          numberCounts[player.number] = [];
+        }
+        numberCounts[player.number].push(player);
+      }
+    });
+    
+    // Find duplicates and mark all but the first as errors
+    Object.entries(numberCounts).forEach(([number, playersWithNumber]) => {
+      if (playersWithNumber.length > 1) {
+        // Mark all but the first player as having an error
+        playersWithNumber.slice(1).forEach(player => {
+          errors[player.id] = `Player number ${number} is already used`;
+        });
+      }
+    });
+    
+    setValidationErrors(errors);
   };
 
   const handleAddPlayer = () => {
@@ -43,13 +78,25 @@ export const TeamView: React.FC = (): ReactElement => {
       name: '',
       number: ''
     };
-    setEditedPlayers(players => [...players, newPlayer]);
+    const updatedPlayers = [...editedPlayers, newPlayer];
+    setEditedPlayers(updatedPlayers);
     setHasChanges(true);
+    // Validate after adding (in case there are existing duplicates)
+    validatePlayerNumbers(updatedPlayers);
   };
 
   const handleRemovePlayer = (playerId: string) => {
-    setEditedPlayers(players => players.filter(player => player.id !== playerId));
+    const updatedPlayers = editedPlayers.filter(player => player.id !== playerId);
+    setEditedPlayers(updatedPlayers);
     setHasChanges(true);
+    // Validate after removing (might resolve duplicate errors)
+    validatePlayerNumbers(updatedPlayers);
+    // Clear any validation error for the removed player
+    setValidationErrors(errors => {
+      const newErrors = { ...errors };
+      delete newErrors[playerId];
+      return newErrors;
+    });
   };
 
   const handleTeamNameChange = (value: string) => {
@@ -59,6 +106,9 @@ export const TeamView: React.FC = (): ReactElement => {
 
   const handleSave = async () => {
     if (!team) return;
+    
+    // Don't save if there are validation errors
+    if (Object.keys(validationErrors).length > 0) return;
 
     const updatedTeam: Team = {
       ...team,
@@ -142,7 +192,13 @@ export const TeamView: React.FC = (): ReactElement => {
                       required
                       aria-label="Player Number"
                       style={{ width: '80px' }}
+                      isInvalid={!!validationErrors[player.id]}
                     />
+                    {validationErrors[player.id] && (
+                      <Form.Control.Feedback type="invalid">
+                        {validationErrors[player.id]}
+                      </Form.Control.Feedback>
+                    )}
                   </td>
                   <td>
                     <Form.Control
@@ -185,7 +241,7 @@ export const TeamView: React.FC = (): ReactElement => {
                 <Button 
                   variant="success" 
                   onClick={handleSave}
-                  disabled={!hasChanges}
+                  disabled={!hasChanges || Object.keys(validationErrors).length > 0}
                 >
                   Save Changes
                 </Button>
