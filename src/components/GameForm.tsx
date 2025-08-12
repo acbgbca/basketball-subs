@@ -5,9 +5,11 @@ import { Game, Team, Player } from '../types';
 import { dbService } from '../services/db';
 import { useNavigate } from 'react-router-dom';
 import { sortPlayersByNumber } from '../utils/playerUtils';
+import { useTeams } from '../hooks/useDataLoading';
 
 export const GameForm: React.FC = () => {
-  const [teams, setTeams] = useState<Team[]>([]);
+  // Use custom hook for teams loading
+  const { teams, loading, error } = useTeams(false);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [opponent, setOpponent] = useState('');
   const [selectedPlayers, setSelectedPlayers] = useState<Set<string>>(new Set());
@@ -20,14 +22,6 @@ export const GameForm: React.FC = () => {
   const [showFillInPlayerModal, setShowFillInPlayerModal] = useState(false);
   const navigate = useNavigate();
   const buttonsContainerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const loadTeams = async () => {
-      const teamsData = await dbService.getTeams();
-      setTeams(teamsData);
-    };
-    loadTeams();
-  }, []);
 
   useEffect(() => {
     // Calculate max button width when team or selected players change

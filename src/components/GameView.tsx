@@ -10,11 +10,13 @@ import EndPeriodModal from './modals/EndPeriodModal';
 import SubstitutionModal from './modals/SubstitutionModal';
 import FoulModal from './modals/FoulModal';
 import { useModalState } from '../hooks/useModalState';
+import { useGame } from '../hooks/useDataLoading';
 
 export const GameView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   
-  const [game, setGame] = useState<Game | null>(null);
+  // Use custom hook for game loading
+  const { game, loading, error, setGame } = useGame(id);
   const [activePlayers, setActivePlayers] = useState<Set<string>>(new Set());
   const [currentPeriod, setCurrentPeriod] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(0);
@@ -50,31 +52,28 @@ export const GameView: React.FC = () => {
   // Store the actual active players before edit mode to restore on cancel
   const [preEditActivePlayers, setPreEditActivePlayers] = useState<Set<string>>(new Set());
 
+  // Initialize game state when game data is loaded
   useEffect(() => {
-    const loadGame = async () => {
-      if (id) {
-        const gameData = await gameService.getGame(id);
-        setGame(gameData);
-        // Initialize states from persisted data
-        setActivePlayers(new Set(gameData.activePlayers || []));
-        setCurrentPeriod(gameData.currentPeriod || 0);
-        setIsRunning(gameData.isRunning || false);
-        
-        // Calculate time remaining based on period start time or elapsed time
-        if (gameData.isRunning && gameData.periodStartTime) {
-          const elapsedSeconds = Math.floor((Date.now() - gameData.periodStartTime) / 1000);
-          const periodLength = gameData.periods[currentPeriod].length * 60;
-          setTimeRemaining(Math.max(0, periodLength - elapsedSeconds));
-        } else if (gameData.periodTimeElapsed) {
-          const periodLength = gameData.periods[currentPeriod].length * 60;
-          setTimeRemaining(Math.max(0, periodLength - gameData.periodTimeElapsed));
-        } else {
-          setTimeRemaining(gameData.periods[currentPeriod].length * 60);
-        }
+    if (game) {
+      // Initialize states from persisted data
+      setActivePlayers(new Set(game.activePlayers || []));
+      setCurrentPeriod(game.currentPeriod || 0);
+      setIsRunning(game.isRunning || false);
+      
+      // Calculate time remaining based on period start time or elapsed time
+      const currentPeriodIndex = game.currentPeriod || 0;
+      if (game.isRunning && game.periodStartTime) {
+        const elapsedSeconds = Math.floor((Date.now() - game.periodStartTime) / 1000);
+        const periodLength = game.periods[currentPeriodIndex].length * 60;
+        setTimeRemaining(Math.max(0, periodLength - elapsedSeconds));
+      } else if (game.periodTimeElapsed) {
+        const periodLength = game.periods[currentPeriodIndex].length * 60;
+        setTimeRemaining(Math.max(0, periodLength - game.periodTimeElapsed));
+      } else {
+        setTimeRemaining(game.periods[currentPeriodIndex].length * 60);
       }
-    };
-    loadGame();
-  }, [id]);
+    }
+  }, [game]);
 
   // Update persistence when state changes
   const updateGameState = async () => {
@@ -306,7 +305,9 @@ export const GameView: React.FC = () => {
     }
   };
 
-  if (!game) return <div>Loading...</div>;
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+  if (!game) return <div>Game not found</div>;
 
   return (
     <Container>

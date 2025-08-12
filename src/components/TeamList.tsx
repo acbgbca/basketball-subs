@@ -6,9 +6,11 @@ import { dbService } from '../services/db';
 import { TeamForm } from './TeamForm';
 import { useNavigate } from 'react-router-dom';
 import { useModalState, useModalWithData } from '../hooks/useModalState';
+import { useTeams } from '../hooks/useDataLoading';
 
 export const TeamList: React.FC = () => {
-  const [teams, setTeams] = useState<Team[]>([]);
+  // Use custom hook for teams loading
+  const { teams, loading, error, setTeams } = useTeams(true);
   const [importValue, setImportValue] = useState('');
   const [importError, setImportError] = useState('');
   const navigate = useNavigate();
@@ -20,14 +22,6 @@ export const TeamList: React.FC = () => {
     setImportValue('');
     setImportError('');
   });
-
-  useEffect(() => {
-    const loadTeams = async () => {
-      const teamsData = await dbService.getTeams();
-      setTeams(teamsData.sort((a, b) => a.name.localeCompare(b.name)));
-    };
-    loadTeams();
-  }, []);
 
   const handleDeleteClick = (team: Team) => {
     deleteModal.open(team);

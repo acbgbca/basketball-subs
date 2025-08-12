@@ -3,28 +3,13 @@ import { Container, Row, Col, Card, Button, Modal } from 'react-bootstrap';
 import { Game } from '../types';
 import { dbService } from '../services/db';
 import { Link } from 'react-router-dom';
+import { useGames } from '../hooks/useDataLoading';
 
 export const GameList: React.FC = () => {
-  const [games, setGames] = useState<Game[]>([]);
+  // Use custom hook for games loading
+  const { games, loading, error, setGames } = useGames(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [gameToDelete, setGameToDelete] = useState<Game | null>(null);
-
-  useEffect(() => {
-    const loadGames = async () => {
-      const gamesData = await dbService.getGames();
-      const sortedGames = [...gamesData].sort((a, b) => {
-        // First sort by date (newest first)
-        const dateComparison = new Date(b.date).getTime() - new Date(a.date).getTime();
-        // If dates are equal, sort by team name
-        if (dateComparison === 0) {
-          return a.team.name.localeCompare(b.team.name);
-        }
-        return dateComparison;
-      });
-      setGames(sortedGames);
-    };
-    loadGames();
-  }, []);
 
   const handleDeleteClick = (game: Game) => {
     setGameToDelete(game);

@@ -5,28 +5,27 @@ import { v4 as uuidv4 } from 'uuid';
 import { Team, Player } from '../types';
 import { dbService } from '../services/db';
 import { createShareUrl } from '../utils/shareTeam';
+import { useTeam } from '../hooks/useDataLoading';
 
 export const TeamView: React.FC = (): ReactElement => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [team, setTeam] = useState<Team | null>(null);
+  
+  // Use custom hook for team loading
+  const { team, loading, error, setTeam } = useTeam(id);
   const [editedPlayers, setEditedPlayers] = useState<Player[]>([]);
   const [editedTeamName, setEditedTeamName] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
 
+  // Initialize edited state when team data is loaded
   useEffect(() => {
-    const loadTeam = async () => {
-      if (id) {
-        const teamData = await dbService.getTeam(id);
-        setTeam(teamData);
-        setEditedPlayers(teamData?.players || []);
-        setEditedTeamName(teamData?.name || '');
-      }
-    };
-    loadTeam();
-  }, [id]);
+    if (team) {
+      setEditedPlayers(team.players || []);
+      setEditedTeamName(team.name || '');
+    }
+  }, [team]);
 
   const handlePlayerChange = (playerId: string, field: 'name' | 'number', value: string) => {
     setEditedPlayers(players => 
@@ -100,7 +99,9 @@ export const TeamView: React.FC = (): ReactElement => {
     }
   };
 
-  if (!team) return <div>Loading...</div>;
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+  if (!team) return <div>Team not found</div>;
 
   return (
     <Container>
