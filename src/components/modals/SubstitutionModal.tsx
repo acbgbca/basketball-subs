@@ -1,14 +1,7 @@
-// Helper to format seconds as mm:ss
-const formatTime = (seconds: number | null) => {
-  if (seconds == null || isNaN(seconds)) return '';
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-};
-
 import React from 'react';
 import { Modal, Button, Row, Col, Badge } from 'react-bootstrap';
 import { Game } from '../../types';
+import { formatTimeNullable, parseTime } from '../../utils/timeUtils';
 
 interface SubstitutionModalProps {
   show: boolean;
@@ -44,23 +37,12 @@ const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
 
   // Store editTime in seconds, but allow editing raw mm:ss string
   const [editTime, setEditTime] = React.useState(eventTime ?? null);
-  const [rawTimeInput, setRawTimeInput] = React.useState(eventId && eventTime != null ? formatTime(eventTime) : '');
+  const [rawTimeInput, setRawTimeInput] = React.useState(eventId && eventTime != null ? formatTimeNullable(eventTime) : '');
 
   React.useEffect(() => {
     setEditTime(eventTime ?? null);
-    setRawTimeInput(eventId && eventTime != null ? formatTime(eventTime) : '');
+    setRawTimeInput(eventId && eventTime != null ? formatTimeNullable(eventTime) : '');
   }, [eventTime, eventId]);
-
-
-  // Helper to parse mm:ss string to seconds
-  const parseTime = (value: string) => {
-    const parts = value.split(':');
-    if (parts.length !== 2) return NaN;
-    const m = parseInt(parts[0], 10);
-    const s = parseInt(parts[1], 10);
-    if (isNaN(m) || isNaN(s) || s < 0 || s > 59 || m < 0) return NaN;
-    return m * 60 + s;
-  };
 
   // Handle input change: update raw value, only update seconds if valid
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,11 +65,11 @@ const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
   const handleTimeBlur = () => {
     if (/^\d{1,2}:\d{2}$/.test(rawTimeInput)) {
       const seconds = parseTime(rawTimeInput);
-      setRawTimeInput(isNaN(seconds) ? '' : formatTime(seconds));
+      setRawTimeInput(isNaN(seconds) ? '' : formatTimeNullable(seconds));
     } else if (rawTimeInput === '') {
       setRawTimeInput('');
     } else if (editTime != null) {
-      setRawTimeInput(formatTime(editTime));
+      setRawTimeInput(formatTimeNullable(editTime));
     }
   };
 
@@ -114,7 +96,7 @@ const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
               maxLength={5}
               onChange={handleTimeChange}
               onBlur={handleTimeBlur}
-              max={formatTime(game.periods[game.currentPeriod].length * 60)}
+              max={formatTimeNullable(game.periods[game.currentPeriod].length * 60)}
             />
           </div>
         )}

@@ -2,6 +2,7 @@
 import { Game, Substitution, Foul, Player, SubstitutionEvent } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import { dbService } from './db';
+import { formatTime } from '../utils/timeUtils';
 
 interface GameService {
   getGame(id: string): Promise<Game>;
@@ -29,11 +30,7 @@ export const gameService:GameService = {
   async updateGame(game: Game): Promise<void> {
     return dbService.updateGame(game);
   },
-  formatTime(seconds: number): string {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  },
+  formatTime,
 
   calculatePlayerMinutes(game: Game, playerId: string, activePlayers: Set<string>, timeRemaining: number, currentPeriod: number): number {
     // Calculate completed substitution time using SubstitutionEvent

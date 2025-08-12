@@ -2,6 +2,7 @@ import React from 'react';
 import { Table, Badge } from 'react-bootstrap';
 import { Game } from '../types';
 import { gameService } from '../services/gameService';
+import { formatTime } from '../utils/timeUtils';
 
 interface PlayerTableProps {
   game: Game;
@@ -45,11 +46,11 @@ const PlayerTable: React.FC<PlayerTableProps> = ({
               <td>{player.number}</td>
               <td>{player.name}</td>
               <td>
-                <div>{gameService.formatTime(gameService.calculatePlayerMinutes(game, player.id, activePlayers, timeRemaining, currentPeriod))}</div>
+                <div>{formatTime(gameService.calculatePlayerMinutes(game, player.id, activePlayers, timeRemaining, currentPeriod))}</div>
                 <div className="text-muted small">
                   {(() => {
                     const subTime = gameService.calculatePlayerSubTime(game, player.id, currentPeriod, activePlayers);
-                    return subTime !== null ? gameService.formatTime(subTime) : '';
+                    return subTime !== null ? formatTime(subTime) : '';
                   })()}
                 </div>
               </td>
