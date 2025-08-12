@@ -1,8 +1,9 @@
 import React from 'react';
 import { Modal, Button, Row, Col, Badge } from 'react-bootstrap';
 import { Game } from '../../types';
-import { formatTimeNullable, parseTime } from '../../utils/timeUtils';
+import { formatTimeNullable } from '../../utils/timeUtils';
 import { sortPlayersByName } from '../../utils/playerUtils';
+import { useTimeInput } from '../../hooks/useTimeInput';
 
 interface SubstitutionModalProps {
   show: boolean;
@@ -32,50 +33,14 @@ const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
   eventTime,
   onEventTimeChange
 }) => {
-  // Local state for editing time if editing an event
+  // Use custom hook for time input management
+  const timeInput = useTimeInput(
+    eventId ? (eventTime ?? null) : null,
+    onEventTimeChange
+  );
 
-
-
-  // Store editTime in seconds, but allow editing raw mm:ss string
-  const [editTime, setEditTime] = React.useState(eventTime ?? null);
-  const [rawTimeInput, setRawTimeInput] = React.useState(eventId && eventTime != null ? formatTimeNullable(eventTime) : '');
-
-  React.useEffect(() => {
-    setEditTime(eventTime ?? null);
-    setRawTimeInput(eventId && eventTime != null ? formatTimeNullable(eventTime) : '');
-  }, [eventTime, eventId]);
-
-  // Handle input change: update raw value, only update seconds if valid
-  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setRawTimeInput(value);
-    if (value === '') {
-      setEditTime(null);
-      if (onEventTimeChange) onEventTimeChange(0);
-      return;
-    }
-    // Only update seconds if valid mm:ss
-    if (/^\d{1,2}:\d{2}$/.test(value)) {
-      const seconds = parseTime(value);
-      setEditTime(isNaN(seconds) ? null : seconds);
-      if (onEventTimeChange) onEventTimeChange(isNaN(seconds) ? 0 : seconds);
-    }
-  };
-
-  // On blur, reformat if valid
-  const handleTimeBlur = () => {
-    if (/^\d{1,2}:\d{2}$/.test(rawTimeInput)) {
-      const seconds = parseTime(rawTimeInput);
-      setRawTimeInput(isNaN(seconds) ? '' : formatTimeNullable(seconds));
-    } else if (rawTimeInput === '') {
-      setRawTimeInput('');
-    } else if (editTime != null) {
-      setRawTimeInput(formatTimeNullable(editTime));
-    }
-  };
-
-  // For controlled input value
-  const timeInputValue = eventId ? rawTimeInput : '';
+  // Get the maximum allowed time for validation
+  const maxTimeSeconds = game.periods[game.currentPeriod].length * 60;
 
   return (
     <Modal show={show} onHide={onHide} data-testid="substitution-modal">
@@ -89,16 +54,26 @@ const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
             <input
               id="eventTimeInput"
               type="text"
-              className="form-control"
-              value={timeInputValue}
+              className={`form-control ${!timeInput.isValid ? 'is-invalid' : ''}`}
+              value={timeInput.value}
               pattern="^\d{1,2}:\d{2}$"
               placeholder="mm:ss"
               minLength={4}
               maxLength={5}
-              onChange={handleTimeChange}
-              onBlur={handleTimeBlur}
-              max={formatTimeNullable(game.periods[game.currentPeriod].length * 60)}
+              onChange={timeInput.handleChange}
+              onBlur={timeInput.handleBlur}
+              max={formatTimeNullable(maxTimeSeconds)}
             />
+            {!timeInput.isValid && (
+              <div className="invalid-feedback">
+                Please enter time in mm:ss format
+              </div>
+            )}
+            {timeInput.isValid && !timeInput.validateBounds(maxTimeSeconds) && (
+              <div className="invalid-feedback d-block">
+                Time cannot exceed {formatTimeNullable(maxTimeSeconds)}
+              </div>
+            )}
           </div>
         )}
         <Row>
