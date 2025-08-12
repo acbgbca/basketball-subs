@@ -9,6 +9,7 @@ import SubstitutionTable from './SubstitutionTable';
 import EndPeriodModal from './modals/EndPeriodModal';
 import SubstitutionModal from './modals/SubstitutionModal';
 import FoulModal from './modals/FoulModal';
+import { useModalState } from '../hooks/useModalState';
 
 export const GameView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,21 +20,28 @@ export const GameView: React.FC = () => {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   // Remove selectedSub and editForm for substitution editing
-  const [showFoulModal, setShowFoulModal] = useState(false);
   const [selectedFoulPlayerId, setSelectedFoulPlayerId] = useState<string | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const justAdjustedRef = useRef(false); // Add this new ref
   const baseTimeRef = useRef<{startTime: number; initialRemaining: number} | null>(null);
 
-
-
   // Add this with other state declarations
   const [showAllPeriods, setShowAllPeriods] = useState(false);
 
-  // Add new state near other state declarations
-  const [showEndPeriodModal, setShowEndPeriodModal] = useState(false);
-
-  const [showSubModal, setShowSubModal] = useState(false);
+  // Modal state management using custom hooks
+  const foulModal = useModalState(false, () => setSelectedFoulPlayerId(null));
+  const endPeriodModal = useModalState(false);
+  const subModal = useModalState(false, () => {
+    setSubInPlayers(new Set());
+    setSubOutPlayers(new Set());
+    // If we were in edit mode, restore the pre-edit active players
+    if (editSubEventId) {
+      setActivePlayers(preEditActivePlayers);
+      setPreEditActivePlayers(new Set()); // Clear the backup
+    }
+    setEditSubEventId(null);
+    setEditSubEventTime(null);
+  });
   const [subInPlayers, setSubInPlayers] = useState<Set<string>>(new Set());
   const [subOutPlayers, setSubOutPlayers] = useState<Set<string>>(new Set());
   // For editing a substitution event
@@ -133,7 +141,7 @@ export const GameView: React.FC = () => {
       setTimeRemaining(0);
     }
     setActivePlayers(new Set());
-    setShowEndPeriodModal(false);
+    endPeriodModal.close();
     setGame(updatedGame);
   };
 
@@ -184,7 +192,7 @@ export const GameView: React.FC = () => {
     setSubInPlayers(new Set(event.subbedIn.map(p => p.id)));
     setSubOutPlayers(new Set(event.playersOut.map(p => p.id)));
     setActivePlayers(prevActive);
-    setShowSubModal(true);
+    subModal.open();
   };
 
   const handleSubModalSubmit = async () => {
@@ -219,11 +227,7 @@ export const GameView: React.FC = () => {
       setGame(updatedGame);
       setActivePlayers(newActivePlayers);
     }
-    setShowSubModal(false);
-    setSubInPlayers(new Set());
-    setSubOutPlayers(new Set());
-    setEditSubEventId(null);
-    setEditSubEventTime(null);
+    subModal.close();
     setPreEditActivePlayers(new Set()); // Clear the backup after successful submit
   };
   
@@ -231,13 +235,11 @@ export const GameView: React.FC = () => {
     if (!game || !selectedFoulPlayerId) return;
     const updatedGame = await gameService.addFoul(game, currentPeriod, selectedFoulPlayerId, timeRemaining);
     setGame(updatedGame);
-    setShowFoulModal(false);
-    setSelectedFoulPlayerId(null);
+    foulModal.close();
   };
 
   const handleFoulModalClose = () => {
-    setShowFoulModal(false);
-    setSelectedFoulPlayerId(null);
+    foulModal.close();
   };
 
   // Restore missing handler for time adjustment
@@ -317,9 +319,9 @@ export const GameView: React.FC = () => {
         isRunning={isRunning}
         onTimeAdjustment={handleTimeAdjustment}
         onToggleClock={() => setIsRunning(!isRunning)}
-        onEndPeriod={() => setShowEndPeriodModal(true)}
-        onShowSub={() => setShowSubModal(true)}
-        onShowFoul={() => setShowFoulModal(true)}
+        onEndPeriod={() => endPeriodModal.open()}
+        onShowSub={() => subModal.open()}
+        onShowFoul={() => foulModal.open()}
         formatTime={gameService.formatTime}
       />
       <Row>
@@ -349,28 +351,15 @@ export const GameView: React.FC = () => {
 
       {/* EditSubstitutionModal removed for event-based editing. Re-implement if needed. */}
       <EndPeriodModal
-        show={showEndPeriodModal}
-        onHide={() => setShowEndPeriodModal(false)}
+        show={endPeriodModal.show}
+        onHide={endPeriodModal.close}
         onEndPeriod={handleEndPeriod}
         currentPeriod={currentPeriod}
         activePlayersCount={activePlayers.size}
       />
       <SubstitutionModal
-        show={showSubModal}
-        onHide={() => {
-          setShowSubModal(false);
-          setSubInPlayers(new Set());
-          setSubOutPlayers(new Set());
-          
-          // If we were in edit mode, restore the pre-edit active players
-          if (editSubEventId) {
-            setActivePlayers(preEditActivePlayers);
-            setPreEditActivePlayers(new Set()); // Clear the backup
-          }
-          
-          setEditSubEventId(null);
-          setEditSubEventTime(null);
-        }}
+        show={subModal.show}
+        onHide={subModal.close}
         onSubmit={handleSubModalSubmit}
         activePlayers={activePlayers}
         subInPlayers={subInPlayers}
@@ -382,7 +371,7 @@ export const GameView: React.FC = () => {
         onEventTimeChange={setEditSubEventTime}
       />
       <FoulModal
-        show={showFoulModal}
+        show={foulModal.show}
         onHide={handleFoulModalClose}
         onConfirm={handleFoulConfirm}
         activePlayers={activePlayers}

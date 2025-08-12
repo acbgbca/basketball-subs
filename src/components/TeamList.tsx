@@ -4,20 +4,22 @@ import { Link } from 'react-router-dom';
 import { Team } from '../types';
 import { dbService } from '../services/db';
 import { TeamForm } from './TeamForm';
-
 import { useNavigate } from 'react-router-dom';
+import { useModalState, useModalWithData } from '../hooks/useModalState';
 
 export const TeamList: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([]);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showNewTeamModal, setShowNewTeamModal] = useState(false);
-  const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
-
-  // Import modal state
-  const [showImportModal, setShowImportModal] = useState(false);
   const [importValue, setImportValue] = useState('');
   const [importError, setImportError] = useState('');
   const navigate = useNavigate();
+
+  // Modal state management using custom hooks
+  const newTeamModal = useModalState(false);
+  const deleteModal = useModalWithData<Team>();
+  const importModal = useModalState(false, () => {
+    setImportValue('');
+    setImportError('');
+  });
 
   useEffect(() => {
     const loadTeams = async () => {
@@ -28,18 +30,16 @@ export const TeamList: React.FC = () => {
   }, []);
 
   const handleDeleteClick = (team: Team) => {
-    setTeamToDelete(team);
-    setShowDeleteModal(true);
+    deleteModal.open(team);
   };
 
   const handleDeleteConfirm = async () => {
-    if (!teamToDelete) return;
+    if (!deleteModal.data) return;
 
     try {
-      await dbService.deleteTeam(teamToDelete.id);
-      setTeams(teams.filter(team => team.id !== teamToDelete.id));
-      setShowDeleteModal(false);
-      setTeamToDelete(null);
+      await dbService.deleteTeam(deleteModal.data.id);
+      setTeams(teams.filter(team => team.id !== deleteModal.data.id));
+      deleteModal.close();
     } catch (error) {
       console.error('Error deleting team:', error);
     }
@@ -55,10 +55,10 @@ export const TeamList: React.FC = () => {
         <Col>
           <h2>Teams</h2>
           <div className="d-flex gap-2">
-            <Button variant="primary" onClick={() => setShowNewTeamModal(true)}>
+            <Button variant="primary" onClick={newTeamModal.open}>
               Add New Team
             </Button>
-            <Button variant="outline-secondary" onClick={() => setShowImportModal(true)}>
+            <Button variant="outline-secondary" onClick={importModal.open}>
               Import
             </Button>
           </div>
@@ -91,34 +91,34 @@ export const TeamList: React.FC = () => {
       </Row>
 
       {/* New Team Modal */}
-      <Modal show={showNewTeamModal} onHide={() => setShowNewTeamModal(false)}>
+      <Modal show={newTeamModal.show} onHide={newTeamModal.close}>
         <Modal.Header closeButton>
           <Modal.Title>Create New Team</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <TeamForm 
             isModal={true} 
-            onClose={() => setShowNewTeamModal(false)}
+            onClose={newTeamModal.close}
             onTeamCreated={handleTeamCreated}
           />
         </Modal.Body>
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
+      <Modal show={deleteModal.show} onHide={deleteModal.close}>
         <Modal.Header closeButton>
           <Modal.Title>Confirm Delete</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          Are you sure you want to delete the team "{teamToDelete?.name}"?
-          {teamToDelete?.players.length ? (
+          Are you sure you want to delete the team "{deleteModal.data?.name}"?
+          {deleteModal.data?.players.length ? (
             <div className="text-danger mt-2">
-              Warning: This team has {teamToDelete.players.length} player(s) that will also be deleted.
+              Warning: This team has {deleteModal.data.players.length} player(s) that will also be deleted.
             </div>
           ) : null}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+          <Button variant="secondary" onClick={deleteModal.close}>
             Cancel
           </Button>
           <Button variant="danger" onClick={handleDeleteConfirm}>
@@ -128,7 +128,7 @@ export const TeamList: React.FC = () => {
       </Modal>
 
       {/* Import Modal */}
-      <Modal show={showImportModal} onHide={() => { setShowImportModal(false); setImportValue(''); setImportError(''); }}>
+      <Modal show={importModal.show} onHide={importModal.close}>
         <Modal.Header closeButton>
           <Modal.Title>Import Team</Modal.Title>
         </Modal.Header>
@@ -149,8 +149,7 @@ export const TeamList: React.FC = () => {
             }
             // Navigate to TeamForm with share param
             navigate(`/teams/new?share=${encodeURIComponent(share)}`);
-            setShowImportModal(false);
-            setImportValue('');
+            importModal.close();
           }}>
             <Form.Group>
               <Form.Label>Paste the full share URL or just the share code below:</Form.Label>
@@ -165,7 +164,7 @@ export const TeamList: React.FC = () => {
             </Form.Group>
             {importError && <div className="text-danger mt-2">{importError}</div>}
             <div className="d-flex gap-2 mt-3 justify-content-end">
-              <Button variant="secondary" onClick={() => { setShowImportModal(false); setImportValue(''); setImportError(''); }}>
+              <Button variant="secondary" onClick={importModal.close}>
                 Cancel
               </Button>
               <Button variant="primary" type="submit">
