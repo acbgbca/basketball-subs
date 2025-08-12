@@ -41,6 +41,8 @@ export const GameView: React.FC = () => {
   // For editing a substitution event
   const [editSubEventId, setEditSubEventId] = useState<string | null>(null);
   const [editSubEventTime, setEditSubEventTime] = useState<number | null>(null);
+  // Store the actual active players before edit mode to restore on cancel
+  const [preEditActivePlayers, setPreEditActivePlayers] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const loadGame = async () => {
@@ -154,6 +156,10 @@ export const GameView: React.FC = () => {
     // - subInPlayers: subbedIn
     // - subOutPlayers: playersOut
     if (!game) return;
+    
+    // Store the current active players before entering edit mode
+    setPreEditActivePlayers(new Set(activePlayers));
+    
     // Find the period and all events up to (but not including) this event
     const period = game.periods[currentPeriod];
     const eventIdx = period.subEvents.findIndex(e => e.id === event.id);
@@ -220,6 +226,7 @@ export const GameView: React.FC = () => {
     setSubOutPlayers(new Set());
     setEditSubEventId(null);
     setEditSubEventTime(null);
+    setPreEditActivePlayers(new Set()); // Clear the backup after successful submit
   };
   
   const handleFoulConfirm = async () => {
@@ -356,12 +363,15 @@ export const GameView: React.FC = () => {
           setShowSubModal(false);
           setSubInPlayers(new Set());
           setSubOutPlayers(new Set());
+          
+          // If we were in edit mode, restore the pre-edit active players
+          if (editSubEventId) {
+            setActivePlayers(preEditActivePlayers);
+            setPreEditActivePlayers(new Set()); // Clear the backup
+          }
+          
           setEditSubEventId(null);
           setEditSubEventTime(null);
-          // Reset activePlayers to current game state when canceling
-          if (game) {
-            setActivePlayers(new Set(game.activePlayers || []));
-          }
         }}
         onSubmit={handleSubModalSubmit}
         activePlayers={activePlayers}
