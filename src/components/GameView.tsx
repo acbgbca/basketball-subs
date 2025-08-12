@@ -11,6 +11,7 @@ import SubstitutionModal from './modals/SubstitutionModal';
 import FoulModal from './modals/FoulModal';
 import { useModalState } from '../hooks/useModalState';
 import { useGame } from '../hooks/useDataLoading';
+import { useGameTimer } from '../hooks/useGameTimer';
 
 export const GameView: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,13 +20,17 @@ export const GameView: React.FC = () => {
   const { game, loading, error, setGame } = useGame(id);
   const [activePlayers, setActivePlayers] = useState<Set<string>>(new Set());
   const [currentPeriod, setCurrentPeriod] = useState(0);
-  const [timeRemaining, setTimeRemaining] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
-  // Remove selectedSub and editForm for substitution editing
   const [selectedFoulPlayerId, setSelectedFoulPlayerId] = useState<string | null>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const justAdjustedRef = useRef(false); // Add this new ref
-  const baseTimeRef = useRef<{startTime: number; initialRemaining: number} | null>(null);
+  
+  // Use custom hook for timer management
+  const { 
+    timeRemaining, 
+    isRunning, 
+    handleTimeAdjustment, 
+    toggleTimer, 
+    stopTimer, 
+    setTimeForPeriod 
+  } = useGameTimer(game, currentPeriod);
 
   // Add this with other state declarations
   const [showAllPeriods, setShowAllPeriods] = useState(false);
@@ -58,20 +63,6 @@ export const GameView: React.FC = () => {
       // Initialize states from persisted data
       setActivePlayers(new Set(game.activePlayers || []));
       setCurrentPeriod(game.currentPeriod || 0);
-      setIsRunning(game.isRunning || false);
-      
-      // Calculate time remaining based on period start time or elapsed time
-      const currentPeriodIndex = game.currentPeriod || 0;
-      if (game.isRunning && game.periodStartTime) {
-        const elapsedSeconds = Math.floor((Date.now() - game.periodStartTime) / 1000);
-        const periodLength = game.periods[currentPeriodIndex].length * 60;
-        setTimeRemaining(Math.max(0, periodLength - elapsedSeconds));
-      } else if (game.periodTimeElapsed) {
-        const periodLength = game.periods[currentPeriodIndex].length * 60;
-        setTimeRemaining(Math.max(0, periodLength - game.periodTimeElapsed));
-      } else {
-        setTimeRemaining(game.periods[currentPeriodIndex].length * 60);
-      }
     }
   }, [game]);
 
@@ -94,50 +85,17 @@ export const GameView: React.FC = () => {
     updateGameState();
   }, [activePlayers, currentPeriod, isRunning]);
 
-  // Modify the timer effect to be more accurate
-  useEffect(() => {
-    if (isRunning) {
-      // Initialize or update the base time ref
-      if (!baseTimeRef.current || justAdjustedRef.current) {
-        baseTimeRef.current = {
-          startTime: Date.now(),
-          initialRemaining: timeRemaining
-        };
-        justAdjustedRef.current = false;
-      }
-      
-      timerRef.current = setInterval(() => {
-        if (!baseTimeRef.current) return;
-        
-        const elapsed = Math.floor((Date.now() - baseTimeRef.current.startTime) / 1000);
-        const newRemaining = Math.max(0, baseTimeRef.current.initialRemaining - elapsed);
-        
-        setTimeRemaining(newRemaining);
-        
-        if (newRemaining <= 0) {
-          clearInterval(timerRef.current as NodeJS.Timeout);
-          setIsRunning(false);
-          baseTimeRef.current = null;
-        }
-      }, 100);
-    } else {
-      clearInterval(timerRef.current as NodeJS.Timeout);
-      baseTimeRef.current = null;
-    }
-    return () => {
-      clearInterval(timerRef.current as NodeJS.Timeout);
-    };
-  }, [isRunning]);
 
   const handleEndPeriod = async () => {
     if (!game) return;
     const updatedGame = await gameService.endPeriod(game);
-    setIsRunning(false);
+    stopTimer();
     if (currentPeriod < game.periods.length - 1) {
-      setCurrentPeriod(prev => prev + 1);
-      setTimeRemaining(game.periods[currentPeriod + 1].length * 60);
+      const newPeriod = currentPeriod + 1;
+      setCurrentPeriod(newPeriod);
+      setTimeForPeriod(newPeriod, game.periods[newPeriod].length);
     } else {
-      setTimeRemaining(0);
+      setTimeForPeriod(currentPeriod, 0);
     }
     setActivePlayers(new Set());
     endPeriodModal.close();
@@ -241,26 +199,6 @@ export const GameView: React.FC = () => {
     foulModal.close();
   };
 
-  // Restore missing handler for time adjustment
-  const handleTimeAdjustment = (seconds: number) => {
-    const newTime = Math.max(0, timeRemaining + seconds);
-    setTimeRemaining(newTime);
-    if (isRunning) {
-      baseTimeRef.current = {
-        startTime: Date.now(),
-        initialRemaining: newTime
-      };
-    }
-    // If the clock is running, we need to adjust the game's periodStartTime
-    if (isRunning && game) {
-      const updatedGame = {
-        ...game,
-        periodStartTime: Date.now() - ((game.periods[currentPeriod].length * 60) - newTime) * 1000
-      };
-      gameService.updateGame(updatedGame);
-      setGame(updatedGame);
-    }
-  };
 
   // Restore missing handler for sub button click
   const handleSubButtonClick = (playerId: string, action: 'in' | 'out') => {
@@ -319,7 +257,7 @@ export const GameView: React.FC = () => {
         timeRemaining={timeRemaining}
         isRunning={isRunning}
         onTimeAdjustment={handleTimeAdjustment}
-        onToggleClock={() => setIsRunning(!isRunning)}
+        onToggleClock={toggleTimer}
         onEndPeriod={() => endPeriodModal.open()}
         onShowSub={() => subModal.open()}
         onShowFoul={() => foulModal.open()}
