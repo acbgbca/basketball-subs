@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, Button, Badge, Alert } from 'react-bootstrap';
 import { Game } from '../../types';
+import { sortPlayersByNumber } from '../../utils/playerUtils';
 
 interface FoulModalProps {
   show: boolean;
@@ -31,10 +32,9 @@ const FoulModal: React.FC<FoulModalProps> = ({
     </Modal.Header>
     <Modal.Body>
       <h5>Select Player</h5>
-      {game.players
-        .filter(player => activePlayers.has(player.id))
-        .sort((a, b) => parseInt(a.number) - parseInt(b.number))
-        .map(player => (
+      {sortPlayersByNumber(
+        game.players.filter(player => activePlayers.has(player.id))
+      ).map(player => (
           <Button
             key={player.id}
             variant={selectedFoulPlayerId === player.id ? "primary" : "outline-light"}

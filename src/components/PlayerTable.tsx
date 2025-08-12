@@ -3,6 +3,7 @@ import { Table, Badge } from 'react-bootstrap';
 import { Game } from '../types';
 import { gameService } from '../services/gameService';
 import { formatTime } from '../utils/timeUtils';
+import { sortPlayersByStatusAndName } from '../utils/playerUtils';
 
 interface PlayerTableProps {
   game: Game;
@@ -30,17 +31,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({
         </tr>
       </thead>
       <tbody>
-        {game.players
-          .sort((a, b) => {
-            // First sort by court status
-            const aOnCourt = activePlayers.has(a.id);
-            const bOnCourt = activePlayers.has(b.id);
-            if (aOnCourt !== bOnCourt) {
-              return bOnCourt ? 1 : -1;
-            }
-            // Then sort by name
-            return a.name.localeCompare(b.name);
-          })
+        {sortPlayersByStatusAndName(game.players, activePlayers)
           .map(player => (
             <tr key={player.id} data-testid={`player-${player.number}`}>
               <td>{player.number}</td>

@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Game, Team, Player } from '../types';
 import { dbService } from '../services/db';
 import { useNavigate } from 'react-router-dom';
+import { sortPlayersByNumber } from '../utils/playerUtils';
 
 export const GameForm: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -175,8 +176,7 @@ export const GameForm: React.FC = () => {
           <Form.Group className="mb-3">
             <Form.Label>Players ({selectedPlayers.size} selected)</Form.Label>
             <div className="player-buttons-container" ref={buttonsContainerRef}>
-              {selectedTeam.players
-                .sort((a, b) => parseInt(a.number) - parseInt(b.number))
+              {sortPlayersByNumber(selectedTeam.players)
                 .map(player => (
                   <Button
                     key={player.id}

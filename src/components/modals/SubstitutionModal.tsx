@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, Button, Row, Col, Badge } from 'react-bootstrap';
 import { Game } from '../../types';
 import { formatTimeNullable, parseTime } from '../../utils/timeUtils';
+import { sortPlayersByName } from '../../utils/playerUtils';
 
 interface SubstitutionModalProps {
   show: boolean;
@@ -112,11 +113,11 @@ const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
                 {activePlayers.size + subInPlayers.size - subOutPlayers.size}
               </Badge>
             </h5>
-            {Array.from(activePlayers)
-              .map(playerId => game.players.find(p => p.id === playerId))
-              .filter(player => player !== undefined)
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map(player => (
+            {sortPlayersByName(
+              Array.from(activePlayers)
+                .map(playerId => game.players.find(p => p.id === playerId))
+                .filter(player => player !== undefined)
+            ).map(player => (
                 <Button
                   key={player.id}
                   variant="outline-light"
@@ -132,10 +133,9 @@ const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
           </Col>
           <Col>
             <h5>On Bench</h5>
-            {game.players
-              .filter(p => !activePlayers.has(p.id))
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map(player => (
+            {sortPlayersByName(
+              game.players.filter(p => !activePlayers.has(p.id))
+            ).map(player => (
                 <Button
                   key={player.id}
                   variant="outline-light"
