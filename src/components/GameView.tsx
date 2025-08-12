@@ -354,8 +354,14 @@ export const GameView: React.FC = () => {
         show={showSubModal}
         onHide={() => {
           setShowSubModal(false);
+          setSubInPlayers(new Set());
+          setSubOutPlayers(new Set());
           setEditSubEventId(null);
           setEditSubEventTime(null);
+          // Reset activePlayers to current game state when canceling
+          if (game) {
+            setActivePlayers(new Set(game.activePlayers || []));
+          }
         }}
         onSubmit={handleSubModalSubmit}
         activePlayers={activePlayers}

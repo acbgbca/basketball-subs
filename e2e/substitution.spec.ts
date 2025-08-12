@@ -79,4 +79,52 @@ test.describe('Edit Substitution Event', () => {
     await expect(subTable).toContainText('Player2');
     await expect(subTable).not.toContainText('Player1');
   });
+
+  test('Cancel edit substitution and verify modal state is clean for new substitution', async ({ page }) => {
+    await setupGameAndSub(page);
+    
+    // Edit the most recent substitution event
+    const subTable = page.getByTestId('substitution-table');
+    await subTable.getByRole('button', { name: 'Edit' }).first().click();
+    
+    // Verify we're in edit mode (should show the time input and selected players)
+    const modal = page.getByTestId('substitution-modal');
+    await expect(modal.locator('#eventTimeInput')).toBeVisible();
+    await expect(modal.getByRole('button', { name: 'Player6' }).locator('.badge')).toHaveClass(/bg-secondary/);
+    await expect(modal.getByRole('button', { name: 'Player1' }).locator('.badge')).toHaveClass(/bg-secondary/);
+    
+    // Cancel the edit
+    await modal.getByRole('button', { name: 'Cancel' }).click();
+    
+    // Open substitution modal for a new substitution
+    await page.getByRole('button', { name: 'Sub', exact: true }).click();
+    
+    // Verify modal is in clean state - no players should be pre-selected
+    const newModal = page.getByTestId('substitution-modal');
+    
+    // Verify no time input is shown (not in edit mode)
+    await expect(newModal.locator('#eventTimeInput')).not.toBeVisible();
+    
+    // Verify no players are pre-selected for substitution
+    // Check that all "On Court" players show "Out" badge (not "Sub")
+    const onCourtButtons = newModal.locator('h5:has-text("On Court") + button, h5:has-text("On Court") ~ button');
+    const onCourtCount = await onCourtButtons.count();
+    for (let i = 0; i < onCourtCount; i++) {
+      const button = onCourtButtons.nth(i);
+      await expect(button.locator('.badge')).toHaveClass(/bg-danger/);
+      await expect(button.locator('.badge')).toHaveText('Out');
+    }
+    
+    // Check that all "On Bench" players show "In" badge (not "Sub")
+    const onBenchButtons = newModal.locator('h5:has-text("On Bench") + button, h5:has-text("On Bench") ~ button');
+    const onBenchCount = await onBenchButtons.count();
+    for (let i = 0; i < onBenchCount; i++) {
+      const button = onBenchButtons.nth(i);
+      await expect(button.locator('.badge')).toHaveClass(/bg-success/);
+      await expect(button.locator('.badge')).toHaveText('In');
+    }
+    
+    // Cancel this modal too to clean up
+    await newModal.getByRole('button', { name: 'Cancel' }).click();
+  });
 });
