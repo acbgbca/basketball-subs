@@ -18,7 +18,7 @@ const PlayerTable: React.FC<PlayerTableProps> = ({
 }) => (
   <>
     <h4>Players</h4>
-    <Table striped bordered>
+    <Table striped bordered data-testid="player-table">
       <thead>
         <tr>
           <th>#</th>

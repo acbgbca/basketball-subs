@@ -1,4 +1,7 @@
 import { test, expect } from '@playwright/test';
+import { createTeamWithPlayers } from './pages/Teams';
+import { createANewGame } from './pages/SetupGame';
+import { navigateToGame, makeSubstitution, editLastSubstitution, cancelSubstitutionModal, verifyPlayersOnCourt } from './pages/RunGame';
 
 // Utility to create a game and perform a substitution
 async function setupGameAndSub(page) {
@@ -78,5 +81,108 @@ test.describe('Edit Substitution Event', () => {
     // Check that Player2 is now shown as subbed out
     await expect(subTable).toContainText('Player2');
     await expect(subTable).not.toContainText('Player1');
+  });
+
+  test('Cancel edit substitution and verify modal state is clean for new substitution', async ({ page }) => {
+    await setupGameAndSub(page);
+    
+    // Edit the most recent substitution event
+    const subTable = page.getByTestId('substitution-table');
+    await subTable.getByRole('button', { name: 'Edit' }).first().click();
+    
+    // Verify we're in edit mode (should show the time input and selected players)
+    const modal = page.getByTestId('substitution-modal');
+    await expect(modal.locator('#eventTimeInput')).toBeVisible();
+    await expect(modal.getByRole('button', { name: 'Player6' }).locator('.badge')).toHaveClass(/bg-secondary/);
+    await expect(modal.getByRole('button', { name: 'Player1' }).locator('.badge')).toHaveClass(/bg-secondary/);
+    
+    // Cancel the edit
+    await modal.getByRole('button', { name: 'Cancel' }).click();
+    
+    // Open substitution modal for a new substitution
+    await page.getByRole('button', { name: 'Sub', exact: true }).click();
+    
+    // Verify modal is in clean state - no players should be pre-selected
+    const newModal = page.getByTestId('substitution-modal');
+    
+    // Verify no time input is shown (not in edit mode)
+    await expect(newModal.locator('#eventTimeInput')).not.toBeVisible();
+    
+    // Verify no players are pre-selected for substitution
+    // Check that all "On Court" players show "Out" badge (not "Sub")
+    const onCourtButtons = newModal.locator('h5:has-text("On Court") + button, h5:has-text("On Court") ~ button');
+    const onCourtCount = await onCourtButtons.count();
+    for (let i = 0; i < onCourtCount; i++) {
+      const button = onCourtButtons.nth(i);
+      await expect(button.locator('.badge')).toHaveClass(/bg-danger/);
+      await expect(button.locator('.badge')).toHaveText('Out');
+    }
+    
+    // Check that all "On Bench" players show "In" badge (not "Sub")
+    const onBenchButtons = newModal.locator('h5:has-text("On Bench") + button, h5:has-text("On Bench") ~ button');
+    const onBenchCount = await onBenchButtons.count();
+    for (let i = 0; i < onBenchCount; i++) {
+      const button = onBenchButtons.nth(i);
+      await expect(button.locator('.badge')).toHaveClass(/bg-success/);
+      await expect(button.locator('.badge')).toHaveText('In');
+    }
+    
+    // Cancel this modal too to clean up
+    await newModal.getByRole('button', { name: 'Cancel' }).click();
+  });
+
+  test('Bug reproduction: Multiple substitutions with edit and cancel should maintain correct player count', async ({ page }) => {
+    // Setup a new team with 10 players
+    const players = Array.from({ length: 10 }, (_, i) => ({
+      number: i + 1,
+      name: `Player${i + 1}`
+    }));
+    
+    await createTeamWithPlayers(page, 'Bug Test Team', players);
+    
+    // Create a new game
+    await createANewGame(page, 'Bug Test Team', 'Test Opponent');
+    
+    // Navigate to the game
+    await navigateToGame(page, 'Bug Test Team');
+    
+    // Sub 5 players onto the court (initial substitution)
+    await makeSubstitution(page, ['Player1', 'Player2', 'Player3', 'Player4', 'Player5'], []);
+    
+    // Wait for the substitution to complete and UI to update
+    await page.waitForTimeout(1000);
+    
+    // Verify 5 players are on court
+    await verifyPlayersOnCourt(page, 5);
+    
+    // Make another sub: 2 players in and 2 players out
+    await makeSubstitution(page, ['Player6', 'Player7'], ['Player1', 'Player2']);
+    
+    // Verify still 5 players on court
+    await verifyPlayersOnCourt(page, 5);
+    
+    // Edit the last substitution
+    await editLastSubstitution(page);
+    
+    // Cancel out without making a change
+    await cancelSubstitutionModal(page);
+    
+    // Wait for UI to update after cancel
+    await page.waitForTimeout(1000);
+    
+    // Verify still 5 players on court after cancel
+    await verifyPlayersOnCourt(page, 5);
+    
+    // Make another sub: 1 player in and 1 player out
+    await makeSubstitution(page, ['Player8'], ['Player3']);
+    
+    // Verify that there are only 5 players on the court (this should catch the bug)
+    await verifyPlayersOnCourt(page, 5);
+    
+    // Additional verification: check the actual count in the player table
+    const onCourtRows = await page.locator('text=Court').count();
+    
+    // This assertion should fail if the bug exists (showing 6 players instead of 5)
+    expect(onCourtRows).toBe(5);
   });
 });

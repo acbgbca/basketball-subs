@@ -130,9 +130,11 @@ const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
                 {activePlayers.size + subInPlayers.size - subOutPlayers.size}
               </Badge>
             </h5>
-            {Array.from(activePlayers).map(playerId => {
-              const player = game.players.find(p => p.id === playerId);
-              return player ? (
+            {Array.from(activePlayers)
+              .map(playerId => game.players.find(p => p.id === playerId))
+              .filter(player => player !== undefined)
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map(player => (
                 <Button
                   key={player.id}
                   variant="outline-light"
@@ -144,24 +146,26 @@ const SubstitutionModal: React.FC<SubstitutionModalProps> = ({
                     {subOutPlayers.has(player.id) ? "Sub" : "Out"}
                   </span>
                 </Button>
-              ) : null;
-            })}
+              ))}
           </Col>
           <Col>
             <h5>On Bench</h5>
-            {game.players.filter(p => !activePlayers.has(p.id)).map(player => (
-              <Button
-                key={player.id}
-                variant="outline-light"
-                className="d-flex justify-content-between align-items-center mb-2 w-100 text-dark"
-                onClick={() => handleSubButtonClick(player.id, 'in')}
-              >
-                <span>{player.name}</span>
-                <span className={`badge ${subInPlayers.has(player.id) ? "bg-secondary" : "bg-success"}`}>
-                  {subInPlayers.has(player.id) ? "Sub" : "In"}
-                </span>
-              </Button>
-            ))}
+            {game.players
+              .filter(p => !activePlayers.has(p.id))
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map(player => (
+                <Button
+                  key={player.id}
+                  variant="outline-light"
+                  className="d-flex justify-content-between align-items-center mb-2 w-100 text-dark"
+                  onClick={() => handleSubButtonClick(player.id, 'in')}
+                >
+                  <span>{player.name}</span>
+                  <span className={`badge ${subInPlayers.has(player.id) ? "bg-secondary" : "bg-success"}`}>
+                    {subInPlayers.has(player.id) ? "Sub" : "In"}
+                  </span>
+                </Button>
+              ))}
           </Col>
         </Row>
       </Modal.Body>
