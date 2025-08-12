@@ -6,7 +6,6 @@ import { gameService } from '../services/gameService';
 import GameHeader from './GameHeader';
 import PlayerTable from './PlayerTable';
 import SubstitutionTable from './SubstitutionTable';
-import EditSubstitutionModal from './modals/EditSubstitutionModal';
 import EndPeriodModal from './modals/EndPeriodModal';
 import SubstitutionModal from './modals/SubstitutionModal';
 import FoulModal from './modals/FoulModal';
@@ -19,7 +18,6 @@ export const GameView: React.FC = () => {
   const [currentPeriod, setCurrentPeriod] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const [showEditSubModal, setShowEditSubModal] = useState(false);
   // Remove selectedSub and editForm for substitution editing
   const [showFoulModal, setShowFoulModal] = useState(false);
   const [selectedFoulPlayerId, setSelectedFoulPlayerId] = useState<string | null>(null);
