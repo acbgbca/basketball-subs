@@ -1,4 +1,7 @@
 // State management stores
-// This file will export all stores once they are created
+export { useGameStore } from './gameStore';
+export { useTeamStore } from './teamStore';
+export { useUIStore, useNotifications } from './uiStore';
 
-export {}; // Placeholder to make this a valid module
+// Re-export store types for convenience
+export type { Game, Team, Player, Foul, Substitution, SubstitutionEvent, Period } from '@/types';
