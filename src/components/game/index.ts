@@ -1,4 +1,7 @@
 // Game-specific components
-// This file will export all game components once they are created
-
-export {}; // Placeholder to make this a valid module
+export { GameView } from './GameView';
+export { GameTimer } from './GameTimer';
+export { GameControls } from './GameControls';
+export { PlayerStatsTable } from './PlayerStatsTable';
+export { SubstitutionHistory } from './SubstitutionHistory';
+export { GameModals } from './GameModals';

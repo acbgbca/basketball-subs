@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { Game, Player, SubstitutionEvent, Foul } from '@/types';
-import { gameService } from '@/services/gameService';
+import { Game, Player, SubstitutionEvent, Foul } from '../types';
+import { gameService } from '../services/gameService';
 
 interface GameState {
   // Core game data

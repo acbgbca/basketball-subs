@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { Team, Player } from '@/types';
-import { dbService } from '@/services/db';
+import { Team, Player } from '../types';
+import { dbService } from '../services/db';
 
 interface TeamState {
   teams: Team[];

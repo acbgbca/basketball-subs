@@ -1,4 +1,7 @@
 // Data access layer
-// This file will export all repositories once they are created
+export { BaseRepository } from './BaseRepository';
+export { GameRepository, gameRepository } from './GameRepository';
+export { TeamRepository, teamRepository } from './TeamRepository';
 
-export {}; // Placeholder to make this a valid module
+// Re-export types for convenience
+export type { BatchRepository } from './BaseRepository';
