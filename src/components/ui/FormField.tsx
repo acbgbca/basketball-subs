@@ -109,8 +109,8 @@ export const FormField: React.FC<FormFieldProps> = ({
   };
 
   return (
-    <Form.Group className={className} controlId={fieldId}>
-      <Form.Label>
+    <Form.Group className={className}>
+      <Form.Label htmlFor={fieldId}>
         {label}
         {required && <span className="text-danger ms-1">*</span>}
       </Form.Label>

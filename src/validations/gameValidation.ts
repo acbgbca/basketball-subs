@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z, ZodError } from 'zod';
 
 // Player validation schema
 export const PlayerSchema = z.object({
@@ -146,8 +146,13 @@ export const validateTimer = (data: unknown) => TimerSchema.safeParse(data);
 export const getValidationErrors = (result: z.SafeParseReturnType<any, any>): string[] => {
   if (result.success) return [];
   
-  return result.error.errors.map(error => {
-    const path = error.path.length > 0 ? `${error.path.join('.')}: ` : '';
+  if (!result.error) return [];
+  
+  // Handle ZodError structure - access the issues property
+  const errors = result.error.issues || result.error.errors || [];
+  
+  return errors.map((error: any) => {
+    const path = error.path && error.path.length > 0 ? `${error.path.join('.')}: ` : '';
     return `${path}${error.message}`;
   });
 };

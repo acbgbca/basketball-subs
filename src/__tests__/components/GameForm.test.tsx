@@ -1,10 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HashRouter } from 'react-router-dom';
-import { GameForm } from '../components/GameForm';
-import { dbService } from '../services/db';
-import { Game } from '../types';
-jest.mock('../services/db');
+import { GameForm } from '../../components/GameForm';
+import { dbService } from '../../services/db';
+import { Game } from '../../types';
+jest.mock('../../services/db');
 
 describe('Game Operations', () => {
   const mockTeam = {

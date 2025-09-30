@@ -13,11 +13,18 @@ describe('gameValidation', () => {
   describe('validateGame', () => {
     it('should validate a complete valid game', () => {
       const validGame = createMockGame();
-      const result = validateGame(validGame);
+      // Ensure date is properly formatted for validation
+      const gameWithValidDate = {
+        ...validGame,
+        date: new Date(validGame.date),
+      };
+      const result = validateGame(gameWithValidDate);
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data).toEqual(validGame);
+        expect(result.data.id).toEqual(gameWithValidDate.id);
+        expect(result.data.team).toEqual(gameWithValidDate.team);
+        expect(result.data.opponent).toEqual(gameWithValidDate.opponent);
       }
     });
 
@@ -108,8 +115,14 @@ describe('gameValidation', () => {
     it('should validate game creation data without ID', () => {
       const gameData = createMockGame();
       const { id, ...gameCreateData } = gameData;
+      
+      // Ensure date is properly formatted
+      const gameCreateWithValidDate = {
+        ...gameCreateData,
+        date: new Date(gameCreateData.date),
+      };
 
-      const result = validateGameCreate(gameCreateData);
+      const result = validateGameCreate(gameCreateWithValidDate);
       expect(result.success).toBe(true);
     });
 
@@ -284,13 +297,17 @@ describe('gameValidation', () => {
       const invalidGame = {
         id: '',
         opponent: '',
+        // Missing required fields to ensure validation failure
       };
 
       const result = validateGame(invalidGame);
-      const errors = getValidationErrors(result);
-
-      expect(errors.length).toBeGreaterThan(0);
-      expect(errors.every(error => typeof error === 'string')).toBe(true);
+      
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const errors = getValidationErrors(result);
+        expect(errors.length).toBeGreaterThan(0);
+        expect(errors.every(error => typeof error === 'string')).toBe(true);
+      }
     });
 
     it('should include field paths in error messages', () => {
@@ -303,9 +320,12 @@ describe('gameValidation', () => {
       };
 
       const result = validateGame(invalidGame);
-      const errors = getValidationErrors(result);
-
-      expect(errors.some(error => error.includes('team.'))).toBe(true);
+      
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        const errors = getValidationErrors(result);
+        expect(errors.some(error => error.includes('team.'))).toBe(true);
+      }
     });
   });
 

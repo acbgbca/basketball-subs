@@ -37,7 +37,7 @@ export const GameView: React.FC = () => {
     if (id && (!gameFromStore || gameFromStore.id !== id)) {
       loadGame(id);
     }
-  }, [id, gameFromStore, loadGame]);
+  }, [id, gameFromStore?.id, loadGame]);
 
   // Show loading state
   if (gameLoading || storeLoading || (!gameFromStore && id)) {
@@ -93,27 +93,11 @@ export const GameView: React.FC = () => {
 
   return (
     <Container fluid className="mt-3">
-      {/* Game Header - keeping existing component for now */}
+      {/* Game Header - Simple title display */}
       <Row className="mb-3">
         <Col>
-          <GameHeader
-            teamName={gameFromStore.team.name}
-            opponent={gameFromStore.opponent}
-            currentPeriod={gameFromStore.currentPeriod}
-            periodFouls={0} // This will be calculated by the component itself
-            timeRemaining={0} // This will be managed by the timer component
-            isRunning={gameFromStore.isRunning}
-            onTimeAdjustment={() => {}} // This will be handled by GameTimer
-            onToggleClock={() => {}} // This will be handled by GameTimer
-            onEndPeriod={() => {}} // This will be handled by GameControls
-            onShowSub={() => {}} // This will be handled by GameControls
-            onShowFoul={() => {}} // This will be handled by GameControls
-            formatTime={(seconds: number) => {
-              const mins = Math.floor(seconds / 60);
-              const secs = seconds % 60;
-              return `${mins}:${secs.toString().padStart(2, '0')}`;
-            }}
-          />
+          <h2>{gameFromStore.team.name}</h2>
+          <h4 className="text-muted">vs {gameFromStore.opponent}</h4>
         </Col>
       </Row>
 

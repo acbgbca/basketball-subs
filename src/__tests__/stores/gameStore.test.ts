@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import { useGameStore } from '../../stores/gameStore';
 import { createMockGame, createMockPlayer, createMockSubstitutionEvent } from '../test-utils';
 
-// Mock the game service
+// Mock the game service and db service
 jest.mock('../../services/gameService', () => ({
   gameService: {
     getGame: jest.fn(),
@@ -15,7 +15,18 @@ jest.mock('../../services/gameService', () => ({
   },
 }));
 
+jest.mock('../../services/db', () => ({
+  dbService: {
+    getGame: jest.fn(),
+    updateGame: jest.fn(),
+    addGame: jest.fn(),
+    getGames: jest.fn(),
+    deleteGame: jest.fn(),
+  },
+}));
+
 const { gameService } = require('../../services/gameService');
+const { dbService } = require('../../services/db');
 
 describe('gameStore', () => {
   beforeEach(() => {
@@ -142,8 +153,8 @@ describe('gameStore', () => {
       const { result } = renderHook(() => useGameStore());
 
       // Set initial game
-      act(() => {
-        result.current.updateGame(mockGame);
+      await act(async () => {
+        await result.current.updateGame(mockGame);
       });
 
       const newActivePlayers = new Set(['player1', 'player2']);
@@ -163,10 +174,11 @@ describe('gameStore', () => {
   describe('timer management', () => {
     const mockGame = createMockGame();
 
-    beforeEach(() => {
+    beforeEach(async () => {
       // Set up initial game state
-      act(() => {
-        useGameStore.getState().updateGame(mockGame);
+      gameService.updateGame.mockResolvedValue(undefined);
+      await act(async () => {
+        await useGameStore.getState().updateGame(mockGame);
       });
     });
 

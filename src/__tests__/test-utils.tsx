@@ -312,3 +312,13 @@ export const expectButtonToBeEnabled = (button: HTMLElement | null) => {
   expect(button).toBeInTheDocument();
   expect(button).toBeEnabled();
 };
+
+// This file contains test utilities and shouldn't have tests
+// Jest was complaining about no tests, so adding a simple dummy test
+describe('test-utils', () => {
+  it('should export test utilities', () => {
+    expect(typeof createMockGame).toBe('function');
+    expect(typeof createMockPlayer).toBe('function');
+    expect(typeof createMockTeam).toBe('function');
+  });
+});

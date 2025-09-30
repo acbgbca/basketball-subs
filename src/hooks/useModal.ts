@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useUIStore } from '../stores/uiStore';
 
 type ModalName = 'substitution' | 'foul' | 'endPeriod' | 'editSubstitution';
@@ -18,8 +18,9 @@ export const useModal = (modalName: ModalName): ModalHook => {
   const { modals } = useUIStore();
   const modal = modals[modalName];
 
-  // Modal-specific actions from the store
-  const actions = useUIStore((state) => {
+  // Modal-specific actions from the store - memoized to prevent re-renders
+  const actions = useMemo(() => {
+    const state = useUIStore.getState();
     switch (modalName) {
       case 'substitution':
         return {
@@ -47,7 +48,7 @@ export const useModal = (modalName: ModalName): ModalHook => {
           hide: () => {},
         };
     }
-  });
+  }, [modalName]);
 
   const isOpen = modal.show;
 

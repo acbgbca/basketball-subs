@@ -49,14 +49,14 @@ export const GameTimer: React.FC<GameTimerProps> = ({ className }) => {
     <Card className={className}>
       <Card.Body>
         <Card.Title className="d-flex justify-content-between align-items-center">
-          <span>Period {periodNumber}</span>
+          <span data-testid="period-display">Period {periodNumber}</span>
           <small className="text-muted">
             {currentPeriodData?.length || 10} min
           </small>
         </Card.Title>
         
         <div className="text-center mb-3">
-          <div className="h1 mb-2" style={{ fontFamily: 'monospace' }}>
+          <div className="h1 mb-2" style={{ fontFamily: 'monospace' }} data-testid="clock-display">
             {formattedTime}
           </div>
           

@@ -1,4 +1,4 @@
-import { teamToShareString, parseSharedTeam, createShareUrl } from '../utils/shareTeam';
+import { teamToShareString, parseSharedTeam, createShareUrl } from '../../utils/shareTeam';
 
 describe('Team Sharing', () => {
   const mockTeam = {

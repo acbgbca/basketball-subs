@@ -5,7 +5,6 @@ import { useForm } from '../../../hooks/useForm';
 
 // Mock the useForm hook
 jest.mock('../../../hooks/useForm');
-const mockUseForm = useForm as jest.MockedFunction<typeof useForm>;
 
 // Create a test wrapper component that uses useForm
 const FormFieldTestWrapper: React.FC<{
@@ -34,23 +33,25 @@ const FormFieldTestWrapper: React.FC<{
   return <>{children(mockFormInstance)}</>;
 };
 
-// Mock useFormField to return predictable values
-const mockUseFormField = (form: any, field: string) => ({
-  value: form.values[field] || '',
-  error: form.errors[field],
-  hasError: !!form.errors[field] && !!form.touched[field],
-  onChange: jest.fn(),
-  onBlur: jest.fn(),
-});
-
 jest.mock('../../../hooks/useForm', () => ({
   useForm: jest.fn(),
-  useFormField: jest.fn().mockImplementation(mockUseFormField),
+  useFormField: jest.fn(),
 }));
+
+const { useFormField } = require('../../../hooks/useForm');
 
 describe('FormField', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    // Setup default mock return value
+    useFormField.mockReturnValue({
+      value: '',
+      error: undefined,
+      hasError: false,
+      onChange: jest.fn(),
+      onBlur: jest.fn(),
+    });
   });
 
   it('should render basic form field correctly', () => {
@@ -237,7 +238,7 @@ describe('PlayerNameField', () => {
     );
 
     const input = screen.getByRole('textbox');
-    expect(input).toHaveAttribute('pattern', '[a-zA-Z\\s\'-\\.]+');
+    expect(input).toHaveAttribute('pattern', '[a-zA-Z\\s\'-.]+');
     expect(input).toHaveAttribute('maxlength', '50');
     expect(input).toHaveAttribute('placeholder', 'Enter player name');
   });

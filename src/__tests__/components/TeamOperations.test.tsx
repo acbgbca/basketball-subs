@@ -1,12 +1,12 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { TeamList } from '../components/TeamList';
-import { TeamView } from '../components/TeamView';
-import { TeamForm } from '../components/TeamForm';
-import { dbService } from '../services/db';
+import { TeamList } from '../../components/TeamList';
+import { TeamView } from '../../components/TeamView';
+import { TeamForm } from '../../components/TeamForm';
+import { dbService } from '../../services/db';
 import userEvent from '@testing-library/user-event';
 
-jest.mock('../services/db');
+jest.mock('../../services/db');
 
 describe('Team Operations', () => {
   beforeEach(() => {

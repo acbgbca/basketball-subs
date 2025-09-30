@@ -63,7 +63,7 @@ export const GameControls: React.FC<GameControlsProps> = ({ className }) => {
               disabled={!game || activePlayerCount === 0}
             >
               <i className="fas fa-exchange-alt me-2" />
-              Substitution
+              Sub
             </Button>
           </Col>
           
