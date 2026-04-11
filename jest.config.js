@@ -6,4 +6,9 @@ module.exports = {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
   },
   testMatch: ['<rootDir>/src/test/**/*.[jt]s?(x)'],
+  transformIgnorePatterns: ['/node_modules/(?!(uuid)/)'],
+  transform: {
+    '^.+\\.tsx?$': 'ts-jest',
+    '^.+\\.js$': 'babel-jest',
+  },
 };
