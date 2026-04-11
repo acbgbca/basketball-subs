@@ -11,13 +11,17 @@
 				"mhutchie.git-graph",
 				"ms-playwright.playwright",
 				"Orta.vscode-jest",
-				"GitHub.vscode-pull-request-github"
+				"GitHub.vscode-pull-request-github",
+				"Anthropic.claude-code"
 			]
 		}
 	},
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
+	"features": {
+		"ghcr.io/devcontainers/features/github-cli:1": {},
+		"ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
