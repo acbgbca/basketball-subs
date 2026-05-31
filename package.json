@@ -12,10 +12,10 @@
     "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "@babel/core": "7.29.0",
-    "@babel/preset-env": "7.29.5",
-    "@babel/preset-react": "7.28.5",
-    "@babel/preset-typescript": "7.28.5",
+    "@babel/core": "7.29.7",
+    "@babel/preset-env": "7.29.7",
+    "@babel/preset-react": "7.29.7",
+    "@babel/preset-typescript": "7.29.7",
     "@playwright/test": "1.60.0",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "6.9.1",
@@ -36,8 +36,8 @@
     "ts-jest": "29.4.11",
     "ts-loader": "9.5.7",
     "typescript": "5.9.3",
-    "webpack": "5.107.1",
-    "webpack-cli": "7.0.2",
+    "webpack": "5.107.2",
+    "webpack-cli": "7.0.3",
     "webpack-dev-server": "5.2.4"
   },
   "scripts": {
